@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { randomUUID } from "node:crypto";
 import { Game } from "../models/Game";
+import { requireAuth } from "../middleware/requireAuth";
 
 const gamesRouter = Router();
+
+gamesRouter.use(requireAuth);
 
 gamesRouter.get("/", async (req, res) => {
   const games = await Game.find().sort({ createdAt: -1 });
