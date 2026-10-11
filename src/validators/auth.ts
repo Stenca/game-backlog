@@ -40,3 +40,13 @@ export const updateProfileSchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided",
   });
+
+export const updatePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: passwordRule,
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must be different from current password",
+    path: ["newPassword"],
+  });

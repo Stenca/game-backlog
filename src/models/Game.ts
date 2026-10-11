@@ -12,7 +12,14 @@ const gameSchema = new mongoose.Schema(
     rating: { type: Number, min: 1, max: 10 },
     notes: String,
     coverUrl: String,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
   },
+
   { timestamps: true },
 );
 
