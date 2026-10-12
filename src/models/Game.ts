@@ -2,8 +2,15 @@ import mongoose from "mongoose";
 
 const gameSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    platform: { type: String, required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    title: { type: String, required: true, trim: true },
+    titleLower: { type: String, required: true },
+    platform: { type: String, required: true, trim: true },
     status: {
       type: String,
       enum: ["backlog", "playing", "completed", "dropped", "wishlist"],
@@ -12,15 +19,10 @@ const gameSchema = new mongoose.Schema(
     rating: { type: Number, min: 1, max: 10 },
     notes: String,
     coverUrl: String,
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
   },
-
   { timestamps: true },
 );
+
+gameSchema.index({ userId: 1, titleLower: 1, platform: 1 }, { unique: true });
 
 export const Game = mongoose.model("Game", gameSchema);
