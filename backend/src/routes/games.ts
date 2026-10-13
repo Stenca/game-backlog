@@ -3,6 +3,8 @@ import { Game } from "../models/Game";
 import { AuthedRequest, requireAuth } from "../middleware/requireAuth";
 import { validate } from "../middleware/validate";
 import { createGameSchema, updateGameSchema } from "../validators/games";
+import { UserGame } from "../models/UserGame";
+import { findGameData } from "../services/rawg";
 
 const gamesRouter = Router();
 
@@ -30,22 +32,35 @@ gamesRouter.post(
   "/",
   validate(createGameSchema),
   async (req: AuthedRequest, res) => {
-    try {
-      const game = await Game.create({
-        userId: req.userId,
-        ...req.body,
+    let game = await Game.findOne({ titleLower: req.body.title.toLowerCase() });
+    if (!game) {
+      const rawg = await findGameData(req.body.title);
+      game = await Game.create({
+        title: req.body.title,
         titleLower: req.body.title.toLowerCase(),
+        coverUrl: rawg?.coverUrl,
+        releaseDate: rawg?.releaseDate,
+        playtime: rawg?.playtime,
+        genres: rawg?.genres,
+        rawgId: rawg?.rawgId,
+        availablePlatforms: rawg?.availablePlatforms,
       });
-      res.status(201).json(game);
+    }
+
+    try {
+      const userGame = await UserGame.create({
+        userId: req.userId,
+        gameId: game._id,
+        platform: req.body.platform,
+        status: req.body.status,
+      });
+      res.status(201).json({ ...userGame.toObject(), game });
     } catch (err: any) {
       if (err?.code === 11000) {
-        res
-          .status(409)
-          .json({ error: "You already have this game on this platform" });
+        res.status(409).json({ error: "You already have this game" });
         return;
       }
-      console.error("[games/create]", err);
-      res.status(500).json({ error: "Failed to create game" });
+      throw err;
     }
   },
 );

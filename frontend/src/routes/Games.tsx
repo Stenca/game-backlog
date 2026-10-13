@@ -44,7 +44,7 @@ export default function Games() {
         body: JSON.stringify({ title, platform }),
       });
       setTitle("");
-      setPlatform("");
+      setPlatform(PLATFORMS[0]);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add game");
