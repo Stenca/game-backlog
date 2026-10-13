@@ -11,7 +11,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="register" element={<Register />} />
       <Route element={<ProtectedRoute />}>
-        {/* <Route path="/" element={<Games />} /> */}
+        <Route path="/" element={<Games />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

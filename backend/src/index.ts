@@ -4,8 +4,10 @@ import gamesRouter from "./routes/games.js";
 import { connectDb } from "./db.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
+import cors from "cors";
 
 const app = express();
+app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {

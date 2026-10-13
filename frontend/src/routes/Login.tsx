@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api";
@@ -22,7 +22,7 @@ export default function Login() {
         },
       );
       login(data.token, data.user);
-      navigate("");
+      navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     }
