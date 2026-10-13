@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import type { Game } from "../types/Game";
+import {
+  PLATFORMS,
+  STATUSES,
+  type Game,
+  type Platform,
+  type Status,
+} from "../types/Game";
 import { useAuthStore } from "../stores/authStore";
 import { apiFetch } from "../api";
 
@@ -7,9 +13,8 @@ export default function Games() {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [title, setTitle] = useState("");
-  const [platform, setPlatform] = useState("");
+  const [platform, setPlatform] = useState<string>(PLATFORMS[0]);
 
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
@@ -70,6 +75,11 @@ export default function Games() {
       setError(err instanceof Error ? err.message : "Failed to delete game");
     }
   }
+
+  function isPlatform(value: string): value is Platform {
+    return (PLATFORMS as readonly string[]).includes(value);
+  }
+
   return (
     <div>
       <header>
@@ -82,11 +92,18 @@ export default function Games() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Game title"
         />
-        <input
+        <select
           value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
-          placeholder="Platform"
-        />
+          onChange={(e) => {
+            if (isPlatform(e.target.value)) setPlatform(e.target.value);
+          }}
+        >
+          {PLATFORMS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
         <button type="submit">Add</button>
       </form>
       {error && <p>{error}</p>}
@@ -99,14 +116,14 @@ export default function Games() {
             <select
               value={game.status}
               onChange={(e) =>
-                handleStatusChange(game._id, e.target.value as Game["status"])
+                handleStatusChange(game._id, e.target.value as Status)
               }
             >
-              <option value="backlog">Backlog</option>
-              <option value="playing">Playing</option>
-              <option value="completed">Completed</option>
-              <option value="dropped">Dropped</option>
-              <option value="wishlist">Wishlist</option>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
             <button onClick={() => handleDelete(game._id)}>Delete</button>
           </li>

@@ -10,7 +10,20 @@ const gameSchema = new mongoose.Schema(
     },
     title: { type: String, required: true, trim: true },
     titleLower: { type: String, required: true },
-    platform: { type: String, required: true, trim: true },
+    platform: {
+      type: String,
+      required: true,
+      enum: [
+        "PC",
+        "PlayStation 5",
+        "PlayStation 4",
+        "Xbox Series X|S",
+        "Xbox One",
+        "Nintendo Switch",
+        "Mobile",
+        "Other",
+      ],
+    },
     status: {
       type: String,
       enum: ["backlog", "playing", "completed", "dropped", "wishlist"],

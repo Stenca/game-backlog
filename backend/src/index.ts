@@ -16,7 +16,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/games", gamesRouter);
 
-app.use("/api/auth/", authRouter);
+app.use("/api/auth", authRouter);
 
 app.use("/api/user", usersRouter);
 
