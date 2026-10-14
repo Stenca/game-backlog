@@ -4,27 +4,66 @@ import { AuthedRequest, requireAuth } from "../middleware/requireAuth";
 import { validate } from "../middleware/validate";
 import { createGameSchema, updateGameSchema } from "../validators/games";
 import { UserGame } from "../models/UserGame";
-import { findGameData } from "../services/rawg";
+import { getGameDetails, searchGames } from "../services/rawg";
 
 const gamesRouter = Router();
 
 gamesRouter.use(requireAuth);
 
-gamesRouter.get("/", async (req: AuthedRequest, res) => {
-  const games = await Game.find({ userId: req.userId }).sort({ createdAt: -1 });
-  res.json(games);
+gamesRouter.get("/search", async (req: AuthedRequest, res) => {
+  const q = String(req.query.q ?? "").trim();
+  if (q.length < 2) {
+    res.json([]);
+    return;
+  }
+  const results = await searchGames(q);
+  res.json(results);
 });
 
-gamesRouter.get("/:id", async (req, res) => {
+gamesRouter.get("/details/:rawgId", async (req: AuthedRequest, res) => {
+  const id = Number(req.params.rawgId);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ error: "Invalid rawgId" });
+    return;
+  }
+
+  const details = await getGameDetails(id);
+  if (!details) {
+    res.status(404).json({ error: "Game not found on RAWG" });
+    return;
+  }
+
+  res.json(details);
+});
+
+gamesRouter.get("/", async (req: AuthedRequest, res) => {
+  const userGames = await UserGame.find({ userId: req.userId })
+    .populate("gameId")
+    .sort({ createdAt: -1 });
+
+  res.json(
+    userGames.map((ug) => {
+      const { gameId, ...rest } = ug.toObject();
+      return { ...rest, game: gameId };
+    }),
+  );
+});
+
+gamesRouter.get("/:id", async (req: AuthedRequest, res) => {
   try {
-    const game = await Game.findById(req.params.id);
-    if (!game) {
+    const userGame = await UserGame.findOne({
+      _id: req.params.id,
+      userId: req.userId,
+    }).populate("gameId");
+
+    if (!userGame) {
       res.status(404).json({ error: "Game not found" });
       return;
     }
-    res.json(game);
+
+    res.json({ ...userGame.toObject(), game: userGame.gameId });
   } catch {
-    res.status(400).json({ error: "Invalid Id" });
+    res.status(400).json({ error: "Invalid id" });
   }
 });
 
@@ -32,35 +71,45 @@ gamesRouter.post(
   "/",
   validate(createGameSchema),
   async (req: AuthedRequest, res) => {
-    let game = await Game.findOne({ titleLower: req.body.title.toLowerCase() });
-    if (!game) {
-      const rawg = await findGameData(req.body.title);
-      game = await Game.create({
-        title: req.body.title,
-        titleLower: req.body.title.toLowerCase(),
-        coverUrl: rawg?.coverUrl,
-        releaseDate: rawg?.releaseDate,
-        playtime: rawg?.playtime,
-        genres: rawg?.genres,
-        rawgId: rawg?.rawgId,
-        availablePlatforms: rawg?.availablePlatforms,
-      });
-    }
-
     try {
+      let game = await Game.findOne({ rawgId: req.body.rawgId });
+
+      if (!game) {
+        const rawg = await getGameDetails(req.body.rawgId);
+        if (!rawg) {
+          res.status(404).json({ error: "Game not found on RAWG" });
+          return;
+        }
+        game = await Game.create({
+          title: rawg.title,
+          titleLower: rawg.title.toLowerCase(),
+          rawgId: rawg.rawgId,
+          coverUrl: rawg.coverUrl,
+          releaseDate: rawg.releaseDate,
+          playtime: rawg.playtime,
+          genres: rawg.genres,
+          availablePlatforms: rawg.availablePlatforms,
+        });
+      }
+
       const userGame = await UserGame.create({
         userId: req.userId,
         gameId: game._id,
         platform: req.body.platform,
         status: req.body.status,
       });
-      res.status(201).json({ ...userGame.toObject(), game });
+
+      res.status(201).json({
+        ...userGame.toObject(),
+        game: game.toObject(),
+      });
     } catch (err: any) {
       if (err?.code === 11000) {
         res.status(409).json({ error: "You already have this game" });
         return;
       }
-      throw err;
+      console.error("[games/create]", err);
+      res.status(500).json({ error: "Failed to create game" });
     }
   },
 );
@@ -70,33 +119,25 @@ gamesRouter.patch(
   validate(updateGameSchema),
   async (req: AuthedRequest, res) => {
     try {
-      const update: any = { ...req.body };
-      if (update.title) {
-        update.titleLower = update.title.toLowerCase();
-      }
-
-      const game = await Game.findByIdAndUpdate(
+      const userGame = await UserGame.findOneAndUpdate(
         { _id: req.params.id, userId: req.userId },
-        update,
-        {
-          new: true,
-          runValidators: true,
-        },
-      );
-      if (!game) {
+        req.body,
+        { new: true, runValidators: true },
+      ).populate("gameId");
+
+      if (!userGame) {
         res.status(404).json({ error: "Game not found" });
         return;
       }
-      res.json(game);
+
+      res.json({ ...userGame.toObject(), game: userGame.gameId });
     } catch (err: any) {
       if (err?.code === 11000) {
-        res
-          .status(409)
-          .json({ error: "You already have this game on this platform" });
+        res.status(409).json({ error: "You already have this game" });
         return;
       }
-      if (err?.name("CastError")) {
-        res.status(400).json({ error: "Invalid Id" });
+      if (err?.name === "CastError") {
+        res.status(400).json({ error: "Invalid id" });
         return;
       }
       console.error("[games/patch]", err);
@@ -107,11 +148,16 @@ gamesRouter.patch(
 
 gamesRouter.delete("/:id", async (req: AuthedRequest, res) => {
   try {
-    const game = await Game.findByIdAndDelete(req.params.id);
-    if (!game) {
+    const userGame = await UserGame.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.userId,
+    });
+
+    if (!userGame) {
       res.status(404).json({ error: "Game not found" });
       return;
     }
+
     res.status(204).end();
   } catch {
     res.status(400).json({ error: "Invalid id" });
