@@ -1,28 +1,3 @@
-export const PLATFORMS = [
-  "PC",
-  "PlayStation 5",
-  "PlayStation 4",
-  "Xbox Series X|S",
-  "Xbox One",
-  "Nintendo Switch",
-  "Mobile",
-  "Other",
-] as const;
-
-export type Platform = (typeof PLATFORMS)[number];
-
-export type Game = {
-  _id: string;
-  title: string;
-  platform: Platform;
-  status: "backlog" | "playing" | "completed" | "dropped" | "wishlist";
-  rating?: number;
-  notes?: string;
-  coverUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export const STATUSES = [
   "backlog",
   "playing",
@@ -32,3 +7,58 @@ export const STATUSES = [
 ] as const;
 
 export type Status = (typeof STATUSES)[number];
+
+export type Platform = {
+  name: string;
+  slug?: string;
+  releasedAt?: string;
+};
+
+export type GameCatalog = {
+  _id: string;
+  title: string;
+  titleLower: string;
+  coverUrl?: string;
+  releaseDate?: string;
+  playtime?: number;
+  genres?: string[];
+  rawgId?: number;
+  availablePlatforms?: Platform[];
+};
+
+export type UserGame = {
+  _id: string;
+  status: Status;
+  platform: Platform;
+  rating?: number;
+  notes?: string;
+  game: GameCatalog;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SearchResult = {
+  rawgId: number;
+  title: string;
+  coverUrl?: string;
+  released?: string;
+};
+
+export type GameDetails = {
+  rawgId: number;
+  title: string;
+  coverUrl?: string;
+  releaseDate?: string;
+  playtime?: number;
+  genres: string[];
+  availablePlatforms: Platform[];
+};
+
+export type JournalEntry = {
+  _id: string;
+  userId: string;
+  gameId: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
