@@ -2,7 +2,9 @@ export async function searchGames(query: string) {
   const res = await fetch(
     `https://api.rawg.io/api/games?search=${encodeURIComponent(query)}&page_size=8&key=${process.env.RAWG_API_KEY}`,
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    throw new Error(`RAWG search failed: ${res.status}`);
+  }
   const data = await res.json();
 
   return (data.results ?? []).map((g: any) => ({
@@ -17,7 +19,9 @@ export async function getGameDetails(rawgId: number) {
   const res = await fetch(
     `https://api.rawg.io/api/games/${rawgId}?key=${process.env.RAWG_API_KEY}`,
   );
-  if (!res.ok) return null;
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`RAWG details failed: ${res.status}`);
+
   const game = await res.json();
 
   return {

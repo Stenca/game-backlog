@@ -5,19 +5,25 @@ import { validate } from "../middleware/validate";
 import { createGameSchema, updateGameSchema } from "../validators/games";
 import { UserGame } from "../models/UserGame";
 import { getGameDetails, searchGames } from "../services/rawg";
+import { searchLimiter } from "../middleware/rateLimit";
 
 const gamesRouter = Router();
 
 gamesRouter.use(requireAuth);
 
-gamesRouter.get("/search", async (req: AuthedRequest, res) => {
+gamesRouter.get("/search", searchLimiter, async (req: AuthedRequest, res) => {
   const q = String(req.query.q ?? "").trim();
   if (q.length < 2) {
     res.json([]);
     return;
   }
-  const results = await searchGames(q);
-  res.json(results);
+  try {
+    const results = await searchGames(q);
+    res.json(results);
+  } catch (err) {
+    console.error("[games/search]", err);
+    res.status(502).json({ error: "Search unavailable" });
+  }
 });
 
 gamesRouter.get("/details/:rawgId", async (req: AuthedRequest, res) => {

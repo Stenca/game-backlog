@@ -7,3 +7,8 @@ export const authLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
 });
+
+export const searchLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+});
