@@ -11,6 +11,14 @@ import { useAuthStore } from "../stores/authStore";
 import { apiFetch } from "../api";
 import GameSearch from "../components/GameSearch";
 
+const statusColor: Record<Status, string> = {
+  backlog: "bg-ink-dim",
+  playing: "bg-blue-600",
+  completed: "bg-green-700",
+  dropped: "bg-red-700",
+  wishlist: "bg-purple-700",
+};
+
 export default function Games() {
   const [games, setGames] = useState<UserGame[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +42,7 @@ export default function Games() {
       setLoading(false);
     }
   }
+
   useEffect(() => {
     load();
   }, []);
@@ -100,9 +109,7 @@ export default function Games() {
   async function handleDelete(id: string) {
     setError("");
     try {
-      await apiFetch(`/api/games/${id}`, {
-        method: "DELETE",
-      });
+      await apiFetch(`/api/games/${id}`, { method: "DELETE" });
       setGames((prev) => prev.filter((g) => g._id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete game");
@@ -110,84 +117,179 @@ export default function Games() {
   }
 
   return (
-    <div>
-      <header>
-        <span>{user?.username}</span>
-        <button onClick={logout}>Log out</button>
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-border bg-surface px-6 py-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <span className="text-sm font-medium text-ink-muted">
+            {user?.username}
+          </span>
+          <button
+            onClick={logout}
+            className="text-xs text-ink-muted transition-colors hover:text-ink"
+          >
+            Log out
+          </button>
+        </div>
       </header>
-      <form onSubmit={handleAdd}>
-        <GameSearch
-          onSelect={handleSelect}
-          selected={selected}
-          onClear={handleClearSelection}
-        />
-        {details && (
-          <div>
-            <img src={details.coverUrl} alt="" width={80} />
-            <strong> {details.title}</strong>
-            {details.releaseDate && (
-              <span>({details.releaseDate.slice(0, 4)})</span>
-            )}
-            {details.genres.length > 0 && <p>{details.genres.join(",")}</p>}
+
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <div className="mb-5">
+          <div className="mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <h1 className="text-6xl font-bold tracking-tight text-ink">
+              <span className="text-accent">Bon</span>fire.
+            </h1>
+            <p className="text-lg text-ink-muted">
+              Where your journey is kept.
+            </p>
           </div>
+
+          <p className="text-base">
+            Track your games and take notes of your progress.
+          </p>
+        </div>
+        <form onSubmit={handleAdd} className="mb-8">
+          <GameSearch
+            onSelect={handleSelect}
+            selected={selected}
+            onClear={handleClearSelection}
+          />
+
+          {details && (
+            <>
+              <div className="mt-4 flex gap-4 rounded border border-border bg-surface p-4">
+                <img
+                  src={details.coverUrl}
+                  alt=""
+                  className="h-32 w-24 shrink-0 rounded object-cover"
+                />
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-ink">
+                    {details.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-ink-muted">
+                    {details.releaseDate?.slice(0, 4)}
+                    {details.genres.length > 0 &&
+                      ` · ${details.genres.join(", ")}`}
+                  </p>
+                  {details.playtime && (
+                    <p className="mt-1 text-xs text-ink-dim">
+                      ~{details.playtime}h to beat
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <select
+                  value={platform?.name ?? ""}
+                  onChange={(e) => {
+                    const p = details.availablePlatforms.find(
+                      (x) => x.name === e.target.value,
+                    );
+                    setPlatform(p ?? null);
+                  }}
+                  className="rounded border border-border bg-surface-2 px-3 py-1.5 text-sm text-ink focus:outline-none"
+                >
+                  <option value="">Select platform</option>
+                  {details.availablePlatforms.map((p) => (
+                    <option key={p.slug ?? p.name} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as Status)}
+                  className="rounded border border-border bg-surface-2 px-3 py-1.5 text-sm text-ink focus:outline-none"
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="submit"
+                  disabled={!platform}
+                  className="rounded bg-accent px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
+            </>
+          )}
+        </form>
+
+        {error && (
+          <p className="mb-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-400">
+            {error}
+          </p>
         )}
-        <select
-          value={platform?.name ?? ""}
-          onChange={(e) => {
-            const p = details?.availablePlatforms.find(
-              (x) => x.name === e.target.value,
-            );
-            setPlatform(p ?? null);
-          }}
-          disabled={!details}
-        >
-          <option value="">
-            {details ? "Select platform" : "Pick a game first"}
-          </option>
-          {details?.availablePlatforms.map((p) => (
-            <option key={p.slug ?? p.name} value={p.name}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as Status)}
-          disabled={!details}
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <button type="submit">Add</button>
-      </form>
 
-      {error && <p>{error}</p>}
-      {loading && <p>Loading...</p>}
+        {loading && <p className="text-sm text-ink-muted">Loading…</p>}
 
-      <ul>
-        {games.map((g) => (
-          <li key={g._id}>
-            {g.game.coverUrl && <img src={g.game.coverUrl} alt="" width={40} />}
-            <strong>{g.game.title}</strong> - {g.platform.name}
-            <select
-              value={g.status}
-              onChange={(e) =>
-                handleStatusChange(g._id, e.target.value as Status)
-              }
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-            <button onClick={() => handleDelete(g._id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+        {!loading && games.length === 0 && (
+          <p className="text-sm text-ink-muted">
+            No games yet. Search above to add one.
+          </p>
+        )}
+
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {games.map((g) => (
+            <li key={g._id} className="group">
+              <div className="relative aspect-3/4 overflow-hidden rounded bg-surface-2">
+                {g.game.coverUrl ? (
+                  <img
+                    src={g.game.coverUrl}
+                    alt={g.game.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs text-ink-dim">
+                    No cover
+                  </div>
+                )}
+
+                <span
+                  className={`absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white ${statusColor[g.status]}`}
+                >
+                  {g.status}
+                </span>
+
+                <button
+                  onClick={() => handleDelete(g._id)}
+                  className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-1.5 truncate text-xs font-medium text-ink">
+                {g.game.title}
+              </div>
+              <div className="text-[11px] text-ink-muted">
+                {g.platform.name}
+              </div>
+
+              <select
+                value={g.status}
+                onChange={(e) =>
+                  handleStatusChange(g._id, e.target.value as Status)
+                }
+                className="mt-1 w-full rounded border border-border bg-surface-2 px-1 py-0.5 text-[11px] text-ink-muted focus:outline-none"
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </li>
+          ))}
+        </ul>
+      </main>
     </div>
   );
 }

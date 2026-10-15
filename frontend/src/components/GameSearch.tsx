@@ -81,38 +81,49 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
             setQuery(e.target.value);
             if (selected) onClear();
           }}
+          onFocus={() => {
+            if (!selected && results.length > 0) {
+              setOpen(true);
+            }
+          }}
           placeholder="Search a game..."
           disabled={!!selected}
-          className="flex-1"
+          className="w-full rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-ink-muted focus:outline-none disabled:opacity-60"
         />
         {selected && (
-          <button type="button" onClick={handleClear}>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="rounded border border-border px-3 text-sm text-ink-muted transition-colors hover:border-ink-muted hover:text-ink"
+          >
             ×
           </button>
         )}
       </div>
 
       {open && results.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-h-80 w-full overflow-auto rounded border bg-white shadow">
+        <ul className="absolute z-10 mt-1 max-h-96 w-full overflow-auto rounded border border-border bg-surface shadow-lg">
           {results.map((r) => (
             <li
               key={r.rawgId}
               onClick={() => handlePick(r)}
-              className="flex cursor-pointer items-center gap-3 p-2 hover:bg-gray-100"
+              className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
             >
               {r.coverUrl && (
                 <img
                   src={r.coverUrl}
                   alt=""
-                  className="h-12 w-9 rounded object-cover"
+                  className="h-16 w-12 shrink-0 rounded object-cover"
                 />
               )}
-              <div className="flex flex-col">
-                <span className="font-medium">{r.title}</span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium text-ink">
+                  {r.title}
+                </div>
                 {r.released && (
-                  <span className="text-xs text-gray-500">
+                  <div className="text-xs text-ink-muted">
                     {r.released.slice(0, 4)}
-                  </span>
+                  </div>
                 )}
               </div>
             </li>
@@ -121,7 +132,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
       )}
 
       {loading && !open && (
-        <p className="mt-1 text-xs text-gray-500">Searching…</p>
+        <p className="mt-1 text-xs text-ink-dim">Searching…</p>
       )}
     </div>
   );

@@ -71,7 +71,14 @@ authRouter.post(
         return;
       }
       const token = signToken(user.id);
-      res.json({ token, user: { id: user.id, email: user.email } });
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+      });
     } catch {
       res.status(500).json({ error: "Login failed" });
     }
