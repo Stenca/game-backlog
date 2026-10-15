@@ -27,9 +27,7 @@ export default function Games() {
   const [details, setDetails] = useState<GameDetails | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [status, setStatus] = useState<Status>("backlog");
-
-  const logout = useAuthStore((s) => s.logout);
-  const user = useAuthStore((s) => s.user);
+  const [searchKey, setSearchKey] = useState(0);
 
   async function load() {
     setError("");
@@ -67,6 +65,7 @@ export default function Games() {
     setDetails(null);
     setPlatform(null);
     setStatus("backlog");
+    setSearchKey((k) => k + 1);
   }
 
   async function handleAdd(e: React.SubmitEvent) {
@@ -118,20 +117,6 @@ export default function Games() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-border bg-surface px-6 py-3">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <span className="text-sm font-medium text-ink-muted">
-            {user?.username}
-          </span>
-          <button
-            onClick={logout}
-            className="text-xs text-ink-muted transition-colors hover:text-ink"
-          >
-            Log out
-          </button>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-5">
           <div className="mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -149,6 +134,7 @@ export default function Games() {
         </div>
         <form onSubmit={handleAdd} className="mb-8">
           <GameSearch
+            key={searchKey}
             onSelect={handleSelect}
             selected={selected}
             onClear={handleClearSelection}
