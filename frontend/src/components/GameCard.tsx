@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { STATUSES, type Status, type UserGame } from "../types/Game";
+import { useGameStore } from "../stores/gameStore";
 
 const statusColor: Record<Status, string> = {
   backlog: "bg-ink-dim",
@@ -11,17 +12,12 @@ const statusColor: Record<Status, string> = {
 
 type Props = {
   game: UserGame;
-  onStatusChange: (id: string, status: Status) => void;
-  onDelete: (id: string) => void;
   onClick?: (game: UserGame) => void;
 };
 
-export default function GameCard({
-  game,
-  onStatusChange,
-  onDelete,
-  onClick,
-}: Props) {
+export default function GameCard({ game, onClick }: Props) {
+  const updateStatus = useGameStore((s) => s.updateStatus);
+  const remove = useGameStore((s) => s.remove);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,9 +39,14 @@ export default function GameCard({
     setMenuOpen((open) => !open);
   }
 
-  function handleSelectStatus(status: Status) {
-    onStatusChange(game._id, status);
+  async function handleSelectStatus(status: Status) {
+    await updateStatus(game._id, status);
     setMenuOpen(false);
+  }
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    await remove(game._id);
   }
   return (
     <li className="group">
@@ -92,10 +93,7 @@ export default function GameCard({
           )}
         </div>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(game._id);
-          }}
+          onClick={handleDelete}
           className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
         >
           ×

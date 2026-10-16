@@ -5,33 +5,23 @@ import {
   type Platform,
   type SearchResult,
   type Status,
-  type UserGame,
 } from "../types/Game";
 import { apiFetch } from "../api";
 import GameSearch from "../components/GameSearch";
 import GameCard from "../components/GameCard";
+import { useGameStore } from "../stores/gameStore";
 
 export default function Games() {
-  const [games, setGames] = useState<UserGame[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const games = useGameStore((s) => s.games);
+  const loading = useGameStore((s) => s.loading);
+  const error = useGameStore((s) => s.error);
+  const load = useGameStore((s) => s.load);
+  const add = useGameStore((s) => s.add);
   const [selected, setSelected] = useState<SearchResult | null>(null);
   const [details, setDetails] = useState<GameDetails | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [status, setStatus] = useState<Status>("backlog");
   const [searchKey, setSearchKey] = useState(0);
-
-  async function load() {
-    setError("");
-    try {
-      const data = await apiFetch<UserGame[]>("/api/games");
-      setGames(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load games");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   useEffect(() => {
     load();
@@ -48,7 +38,7 @@ export default function Games() {
       setDetails(d);
       setPlatform(d.availablePlatforms[0] ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load details");
+      console.error(err);
     }
   }
 
@@ -63,48 +53,16 @@ export default function Games() {
   async function handleAdd(e: React.SubmitEvent) {
     e.preventDefault();
     if (!selected || !platform) return;
-    setError("");
-    try {
-      await apiFetch("/api/games", {
-        method: "POST",
-        body: JSON.stringify({
-          rawgId: selected.rawgId,
-          platform: {
-            name: platform.name,
-            slug: platform.slug,
-            releasedAt: platform.releasedAt,
-          },
-          status,
-        }),
-      });
-      handleClearSelection();
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add game");
-    }
-  }
-
-  async function handleStatusChange(id: string, newStatus: Status) {
-    setError("");
-    try {
-      const updated = await apiFetch<UserGame>(`/api/games/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
-      setGames((prev) => prev.map((g) => (g._id === id ? updated : g)));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update game");
-    }
-  }
-
-  async function handleDelete(id: string) {
-    setError("");
-    try {
-      await apiFetch(`/api/games/${id}`, { method: "DELETE" });
-      setGames((prev) => prev.filter((g) => g._id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete game");
-    }
+    await add({
+      rawgId: selected.rawgId,
+      platform: {
+        name: platform.name,
+        slug: platform.slug,
+        releasedAt: platform.releasedAt,
+      },
+      status,
+    });
+    handleClearSelection();
   }
 
   return (
@@ -220,8 +178,6 @@ export default function Games() {
               <GameCard
                 key={g._id}
                 game={g}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
                 onClick={(g) => console.log("open", g._id)}
               />
             ))}
