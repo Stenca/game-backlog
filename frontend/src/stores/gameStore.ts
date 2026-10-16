@@ -7,9 +7,9 @@ type GameStore = {
   loading: boolean;
   error: string;
   load: () => Promise<void>;
-  add: (payload: any) => Promise<void>;
-  updateStatus: (id: string, status: Status) => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  add: (payload: any) => Promise<boolean>;
+  updateStatus: (id: string, status: Status) => Promise<boolean>;
+  remove: (id: string) => Promise<boolean>;
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -37,24 +37,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
         body: JSON.stringify(payload),
       });
       await get().load();
+      return true;
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Failed to add" });
-      throw err;
+      return false;
     }
   },
 
   updateStatus: async (id, status) => {
-    const updated = await apiFetch<UserGame>(`/api/games/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
-    set({
-      games: get().games.map((g) => (g._id === id ? updated : g)),
-    });
+    try {
+      const updated = await apiFetch<UserGame>(`/api/games/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      set((state) => ({
+        games: state.games.map((g) => (g._id === id ? updated : g)),
+      }));
+      return true;
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to update status",
+      });
+      return false;
+    }
   },
 
   remove: async (id) => {
-    await apiFetch(`/api/games/${id}`, { method: "DELETE" });
-    set({ games: get().games.filter((g) => g._id !== id) });
+    try {
+      await apiFetch(`/api/games/${id}`, { method: "DELETE" });
+      set((state) => ({
+        games: state.games.filter((g) => g._id !== id),
+      }));
+      return true;
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to delete game",
+      });
+      return false;
+    }
   },
 }));

@@ -53,7 +53,7 @@ export default function Games() {
   async function handleAdd(e: React.SubmitEvent) {
     e.preventDefault();
     if (!selected || !platform) return;
-    await add({
+    const ok = await add({
       rawgId: selected.rawgId,
       platform: {
         name: platform.name,
@@ -62,7 +62,7 @@ export default function Games() {
       },
       status,
     });
-    handleClearSelection();
+    if (ok) handleClearSelection();
   }
 
   return (

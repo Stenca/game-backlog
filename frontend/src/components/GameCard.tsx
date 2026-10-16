@@ -48,6 +48,7 @@ export default function GameCard({ game, onClick }: Props) {
     e.stopPropagation();
     await remove(game._id);
   }
+
   return (
     <li className="group">
       <div
