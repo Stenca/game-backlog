@@ -2,6 +2,23 @@ import { create } from "zustand";
 import type { Status, UserGame } from "../types/Game";
 import { apiFetch } from "../api";
 
+const STATUS_ORDER: Record<Status, number> = {
+  playing: 0,
+  backlog: 1,
+  wishlist: 2,
+  completed: 3,
+  dropped: 4,
+};
+
+function sortGames(games: UserGame[]): UserGame[] {
+  return [...games].sort((a, b) => {
+    const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+    return statusDiff !== 0
+      ? statusDiff
+      : a.game.title.localeCompare(b.game.title);
+  });
+}
+
 type GameStore = {
   games: UserGame[];
   loading: boolean;
@@ -29,7 +46,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ loading: true, error: "" });
     try {
       const data = await apiFetch<UserGame[]>("/api/games");
-      set({ games: data, loading: false });
+      set({ games: sortGames(data), loading: false });
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : "Failed to load",
@@ -39,12 +56,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   add: async (payload) => {
+    set({ error: "" });
     try {
-      await apiFetch("/api/games", {
+      const created = await apiFetch<UserGame>("/api/games", {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      await get().load();
+      set((state) => ({
+        games: sortGames([...state.games, created]),
+      }));
       return true;
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Failed to add" });
@@ -59,7 +79,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         body: JSON.stringify({ status }),
       });
       set((state) => ({
-        games: state.games.map((g) => (g._id === id ? updated : g)),
+        games: sortGames(state.games.map((g) => (g._id === id ? updated : g))),
       }));
       return true;
     } catch (err) {
