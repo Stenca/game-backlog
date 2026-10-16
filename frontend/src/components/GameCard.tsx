@@ -40,8 +40,8 @@ export default function GameCard({ game, onClick }: Props) {
   }
 
   async function handleSelectStatus(status: Status) {
-    await updateStatus(game._id, status);
-    setMenuOpen(false);
+    const ok = await updateStatus(game._id, status);
+    if (ok) setMenuOpen(false);
   }
 
   async function handleDelete(e: React.MouseEvent) {

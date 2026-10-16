@@ -7,9 +7,17 @@ type GameStore = {
   loading: boolean;
   error: string;
   load: () => Promise<void>;
-  add: (payload: any) => Promise<boolean>;
+  add: (payload: AddGamePayload) => Promise<boolean>;
   updateStatus: (id: string, status: Status) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
+};
+
+type AddGamePayload = {
+  rawgId: number;
+  platform: { name: string; slug?: string; releasedAt?: string };
+  status: Status;
+  rating?: number;
+  notes?: string;
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
