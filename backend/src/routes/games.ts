@@ -128,7 +128,7 @@ gamesRouter.patch(
       const userGame = await UserGame.findOneAndUpdate(
         { _id: req.params.id, userId: req.userId },
         req.body,
-        { new: true, runValidators: true },
+        { returnDocument: "after", runValidators: true },
       ).populate("gameId");
 
       if (!userGame) {

@@ -58,13 +58,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   add: async (payload) => {
     set({ error: "" });
     try {
-      const created = await apiFetch<UserGame>("/api/games", {
+      await apiFetch<UserGame>("/api/games", {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      set((state) => ({
-        games: sortGames([...state.games, created]),
-      }));
+      await get().load();
       return true;
     } catch (err) {
       set({ error: err instanceof Error ? err.message : "Failed to add" });
@@ -73,6 +71,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   updateStatus: async (id, status) => {
+    set({ error: "" });
     try {
       const updated = await apiFetch<UserGame>(`/api/games/${id}`, {
         method: "PATCH",
@@ -91,6 +90,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   remove: async (id) => {
+    set({ error: "" });
     try {
       await apiFetch(`/api/games/${id}`, { method: "DELETE" });
       set((state) => ({
