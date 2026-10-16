@@ -1,4 +1,3 @@
-import "./App.css";
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Games from "./routes/Games";

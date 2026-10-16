@@ -7,17 +7,9 @@ import {
   type Status,
   type UserGame,
 } from "../types/Game";
-import { useAuthStore } from "../stores/authStore";
 import { apiFetch } from "../api";
 import GameSearch from "../components/GameSearch";
-
-const statusColor: Record<Status, string> = {
-  backlog: "bg-ink-dim",
-  playing: "bg-blue-600",
-  completed: "bg-green-700",
-  dropped: "bg-red-700",
-  wishlist: "bg-purple-700",
-};
+import GameCard from "../components/GameCard";
 
 export default function Games() {
   const [games, setGames] = useState<UserGame[]>([]);
@@ -222,59 +214,19 @@ export default function Games() {
           </p>
         )}
 
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {games.map((g) => (
-            <li key={g._id} className="group">
-              <div className="relative aspect-3/4 overflow-hidden rounded bg-surface-2">
-                {g.game.coverUrl ? (
-                  <img
-                    src={g.game.coverUrl}
-                    alt={g.game.title}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-ink-dim">
-                    No cover
-                  </div>
-                )}
-
-                <span
-                  className={`absolute bottom-1 left-1 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white ${statusColor[g.status]}`}
-                >
-                  {g.status}
-                </span>
-
-                <button
-                  onClick={() => handleDelete(g._id)}
-                  className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="mt-1.5 truncate text-xs font-medium text-ink">
-                {g.game.title}
-              </div>
-              <div className="text-[11px] text-ink-muted">
-                {g.platform.name}
-              </div>
-
-              <select
-                value={g.status}
-                onChange={(e) =>
-                  handleStatusChange(g._id, e.target.value as Status)
-                }
-                className="mt-1 w-full rounded border border-border bg-surface-2 px-1 py-0.5 text-[11px] text-ink-muted focus:outline-none"
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </li>
-          ))}
-        </ul>
+        {games.length > 0 && (
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {games.map((g) => (
+              <GameCard
+                key={g._id}
+                game={g}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+                onClick={(g) => console.log("open", g._id)}
+              />
+            ))}
+          </ul>
+        )}
       </main>
     </div>
   );

@@ -48,7 +48,7 @@ export default function Register() {
           required
           minLength={3}
           maxLength={20}
-          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-ink-muted focus:outline-none"
+          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
         <input
           type="email"
@@ -57,7 +57,7 @@ export default function Register() {
           placeholder="Email"
           autoComplete="email"
           required
-          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-ink-muted focus:outline-none"
+          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
         <input
           type="password"
@@ -67,7 +67,7 @@ export default function Register() {
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-ink-muted focus:outline-none"
+          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
 
         <p className="text-xs text-ink-dim">
