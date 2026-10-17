@@ -1,5 +1,6 @@
 import Header from "./components/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
+import GameDetail from "./routes/GameDetail";
 import Games from "./routes/Games";
 import Landing from "./routes/Landing";
 import Login from "./routes/Login";
@@ -17,6 +18,7 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/games" element={<Games />} />
+          <Route path="/games/:id" element={<GameDetail />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

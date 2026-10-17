@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { STATUSES, type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
-
-const statusColor: Record<Status, string> = {
-  backlog: "bg-ink-dim",
-  playing: "bg-accent",
-  completed: "bg-green-700",
-  dropped: "bg-red-700",
-  wishlist: "bg-purple-700",
-};
+import { STATUS_COLOR } from "../utils/status";
+import { Link } from "react-router-dom";
 
 type Props = {
   game: UserGame;
@@ -49,9 +43,9 @@ export default function GameCard({ game, onClick }: Props) {
 
   return (
     <li className="group">
-      <div
-        onClick={() => onClick?.(game)}
-        className="relative aspect-3/4 cursor-pointer overflow-hidden rounded bg-surface-2"
+      <Link
+        to={`/games/${game._id}`}
+        className="relative block aspect-3/4 cursor-pointer overflow-hidden rounded bg-surface-2"
       >
         {game.game.coverUrl ? (
           <img
@@ -91,7 +85,7 @@ export default function GameCard({ game, onClick }: Props) {
             <div ref={menuRef}>
               <button
                 onClick={handleBadgeClick}
-                className={`absolute bottom-1 left-1 cursor-pointer rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-black transition-colors ${statusColor[game.status]}`}
+                className={`absolute bottom-1 left-1 cursor-pointer rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-black transition-colors ${STATUS_COLOR[game.status]}`}
               >
                 {game.status}
               </button>
@@ -127,7 +121,7 @@ export default function GameCard({ game, onClick }: Props) {
             </button>
           </>
         )}
-      </div>
+      </Link>
 
       <div className="mt-1.5 truncate text-xs font-medium text-ink">
         {game.game.title}

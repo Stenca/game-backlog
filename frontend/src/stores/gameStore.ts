@@ -1,14 +1,7 @@
 import { create } from "zustand";
 import type { Status, UserGame } from "../types/Game";
 import { apiFetch } from "../api";
-
-const STATUS_ORDER: Record<Status, number> = {
-  playing: 0,
-  backlog: 1,
-  wishlist: 2,
-  completed: 3,
-  dropped: 4,
-};
+import { STATUS_ORDER } from "../utils/status";
 
 function sortGames(games: UserGame[]): UserGame[] {
   return [...games].sort((a, b) => {
