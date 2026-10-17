@@ -70,20 +70,12 @@ export default function Games() {
     <div className="min-h-screen bg-bg">
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-5">
-          <div className="mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <div className="flex items-center">
-              <img
-                src={bonfireImg}
-                alt=""
-                className="h-12 w-12 object-contain"
-              />
-              <h1 className="text-6xl font-bold tracking-tight text-ink">
-                <span className="text-accent">Bon</span>fire.
-              </h1>
-            </div>
-            <p className="text-lg text-ink-muted">
-              Where your journey is kept.
-            </p>
+          <div className="mb-5 flex flex-wrap items-baseline">
+            <img src={bonfireImg} alt="" className="h-12 w-12 object-contain" />
+            <h1 className="mr-4 text-6xl font-bold tracking-tight text-ink">
+              <span className="text-accent">Bon</span>fire.
+            </h1>
+            <p className="text-lg text-ink-muted">Your journey, remembered.</p>
           </div>
 
           <p className="text-base">
