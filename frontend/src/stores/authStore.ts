@@ -2,7 +2,12 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type User = { id: string; username: string; email: string };
+export type User = {
+  id: string;
+  username: string;
+  displayName: string;
+  email: string;
+};
 
 type AuthState = {
   user: User | null;

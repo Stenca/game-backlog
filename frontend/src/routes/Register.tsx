@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore, type User } from "../stores/authStore";
 import { apiFetch } from "../api";
 
 export default function Register() {
@@ -15,11 +15,16 @@ export default function Register() {
     e.preventDefault();
     setError("");
     try {
-      const data = await apiFetch<{ token: string; user: any }>(
+      const data = await apiFetch<{ token: string; user: User }>(
         "/api/auth/register",
         {
           method: "POST",
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({
+            username: username.toLowerCase(),
+            displayName: username,
+            email,
+            password,
+          }),
         },
       );
       login(data.token, data.user);

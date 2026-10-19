@@ -2,7 +2,7 @@ import { Router } from "express";
 import { loginSchema, registerSchema } from "../validators/auth.js";
 import { validate } from "../middleware/validate.js";
 import { User } from "../models/User.js";
-import { hashPassword, signToken, verifyPassword } from "../utils/auth";
+import { hashPassword, signToken, verifyPassword } from "../utils/auth.js";
 import { authLimiter } from "../middleware/rateLimit.js";
 
 const authRouter = Router();
@@ -13,7 +13,7 @@ authRouter.post(
   validate(registerSchema),
   async (req, res) => {
     try {
-      const { username, email, password } = req.body;
+      const { username, displayName, email, password } = req.body;
 
       const existingEmail = await User.findOne({ email });
       if (existingEmail) {
@@ -28,12 +28,22 @@ authRouter.post(
       }
 
       const passwordHash = await hashPassword(password);
-      const user = await User.create({ username, email, passwordHash });
+      const user = await User.create({
+        username,
+        displayName,
+        email,
+        passwordHash,
+      });
       const token = signToken(user.id);
 
       res.status(201).json({
         token,
-        user: { id: user.id, username: user.username, email: user.email },
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          email: user.email,
+        },
       });
     } catch (err: any) {
       if (err?.code === 11000) {
@@ -76,6 +86,7 @@ authRouter.post(
         user: {
           id: user.id,
           username: user.username,
+          displayName: user.displayName,
           email: user.email,
         },
       });

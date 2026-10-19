@@ -19,7 +19,9 @@ export default function Header() {
             <>
               <span className="text-base">
                 Welcome back,{" "}
-                <span className="font-medium text-accent">{user.username}</span>
+                <span className="font-medium text-accent">
+                  {user.displayName}
+                </span>
               </span>
               <button
                 onClick={handleLogout}
