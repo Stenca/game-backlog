@@ -9,6 +9,9 @@ import {
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
 import { STATUS_COLOR } from "../utils/status";
+import { formatRelative } from "../utils/date";
+import GameCover from "../components/GameCover";
+import StatusMenu from "../components/StatusMenu";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -109,17 +112,7 @@ export default function GameDetail() {
 
       <div className="mt-6 flex flex-col gap-6 md:flex-row">
         <div className="w-full shrink-0 md:w-56">
-          {game.game.coverUrl ? (
-            <img
-              src={game.game.coverUrl}
-              alt={game.game.title}
-              className="w-full rounded bg-surface-2 object-cover"
-            />
-          ) : (
-            <div className="flex aspect-3/4 items-center justify-center rounded bg-surface-2 text-xs text-ink-dim">
-              No cover
-            </div>
-          )}
+          <GameCover game={game} showStatus={false} />
         </div>
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight text-ink">
@@ -131,29 +124,19 @@ export default function GameDetail() {
             )}
             {game.game.genres && game.game.genres.length > 0 && (
               <>
-                <span>.</span>
+                <span>•</span>
                 <span>{game.game.genres.join(", ")}</span>
               </>
             )}
             {game.game.playtime && (
               <>
-                <span>.</span>
+                <span>•</span>
                 <span>~{game.game.playtime}h</span>
               </>
             )}
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <select
-              value={game.status}
-              onChange={(e) => handleStatusChange(e.target.value as Status)}
-              className={`cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-black focus:outline-none ${STATUS_COLOR[game.status]}`}
-            >
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+            <StatusMenu status={game.status} onChange={handleStatusChange} />
             <span className="text-sm text-ink-muted">{game.platform.name}</span>
           </div>
           {error && (
@@ -163,7 +146,58 @@ export default function GameDetail() {
           )}
         </div>
       </div>
-      <section></section>
+      <section className="mt-10 border-t border-border pt-8">
+        <h2 className="text-xl font-semibold text-ink">Journal</h2>
+
+        <form onSubmit={handleAddEntry} className="mt-4">
+          <textarea
+            value={newEntry}
+            onChange={(e) => setNewEntry(e.target.value)}
+            placeholder="What happened today?"
+            rows={3}
+            className="w-full resize-none rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none"
+          />
+          <div className="mt-2 flex justify-end">
+            <button
+              type="submit"
+              disabled={submitting || !newEntry.trim()}
+              className="cursor-pointer rounded bg-accent px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {submitting ? "Saving…" : "Add entry"}
+            </button>
+          </div>
+        </form>
+
+        {entries.length === 0 ? (
+          <p className="mt-6 text-sm text-ink-muted">
+            No entries yet. Write your first note above.
+          </p>
+        ) : (
+          <ul className="mt-6 flex flex-col gap-3">
+            {entries.map((entry) => (
+              <li
+                key={entry._id}
+                className="group rounded border border-border bg-surface px-4 py-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="whitespace-pre-wrap text-sm text-ink">
+                    {entry.body}
+                  </p>
+                  <button
+                    onClick={() => handleDeleteEntry(entry._id)}
+                    className="cursor-pointer text-xs text-ink-dim opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400"
+                  >
+                    Delete
+                  </button>
+                </div>
+                <p className="mt-1 text-[11px] text-ink-dim">
+                  {formatRelative(entry.createdAt)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

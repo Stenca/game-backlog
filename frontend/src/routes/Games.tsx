@@ -175,11 +175,7 @@ export default function Games() {
         {games.length > 0 && (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {games.map((g) => (
-              <GameCard
-                key={g._id}
-                game={g}
-                onClick={(g) => console.log("open", g._id)}
-              />
+              <GameCard key={g._id} game={g} />
             ))}
           </ul>
         )}
