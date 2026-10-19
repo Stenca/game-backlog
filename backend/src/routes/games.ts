@@ -94,6 +94,7 @@ gamesRouter.post(
           releaseDate: rawg.releaseDate,
           playtime: rawg.playtime,
           genres: rawg.genres,
+          developers: rawg.developers,
           availablePlatforms: rawg.availablePlatforms,
         });
       }

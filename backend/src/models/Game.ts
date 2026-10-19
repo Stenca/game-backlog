@@ -8,6 +8,7 @@ const gameSchema = new mongoose.Schema(
     releaseDate: Date,
     playtime: Number,
     genres: [String],
+    developers: [String],
     rawgId: { type: Number, unique: true, sparse: true },
     availablePlatforms: [{ name: String, slug: String, releasedAt: Date }],
   },

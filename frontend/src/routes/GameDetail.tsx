@@ -118,6 +118,16 @@ export default function GameDetail() {
           <h1 className="text-3xl font-bold tracking-tight text-ink">
             {game.game.title}
           </h1>
+          <div className="mt-1 text-sm text-ink-muted">
+            {game.game.developers && game.game.developers.length > 0 && (
+              <p>
+                <span className="text-ink">by </span>{" "}
+                <span className="text-ink">
+                  {game.game.developers.join(", ")}
+                </span>
+              </p>
+            )}
+          </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
             {game.game.releaseDate && (
               <span>{game.game.releaseDate.slice(0, 4)}</span>

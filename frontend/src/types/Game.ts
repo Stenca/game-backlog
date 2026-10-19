@@ -22,6 +22,7 @@ export type GameCatalog = {
   releaseDate?: string;
   playtime?: number;
   genres?: string[];
+  developers?: string[];
   rawgId?: number;
   availablePlatforms?: Platform[];
 };

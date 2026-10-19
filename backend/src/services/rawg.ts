@@ -31,6 +31,7 @@ export async function getGameDetails(rawgId: number) {
     releaseDate: game.released ? new Date(game.released) : undefined,
     playtime: game.playtime,
     genres: game.genres?.map((g: any) => g.name) ?? [],
+    developers: game.developers?.map((d: any) => d.name) ?? [],
     availablePlatforms:
       game.platforms?.map((p: any) => ({
         name: p.platform.name,
