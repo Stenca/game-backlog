@@ -102,6 +102,11 @@ export default function Games() {
                   <h3 className="text-base font-semibold text-ink">
                     {details.title}
                   </h3>
+                  {details.developers && details.developers.length > 0 && (
+                    <p className="mt-1 text-sm text-ink-muted">
+                      {details.developers.join(", ")}
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-ink-muted">
                     {details.releaseDate?.slice(0, 4)}
                     {details.genres.length > 0 &&

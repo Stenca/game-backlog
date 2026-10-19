@@ -9,7 +9,7 @@ import {
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
 import { STATUS_COLOR } from "../utils/status";
-import { formatRelative } from "../utils/date";
+import { formatEntryDate, formatRelative } from "../utils/date";
 import GameCover from "../components/GameCover";
 import StatusMenu from "../components/StatusMenu";
 
@@ -201,7 +201,10 @@ export default function GameDetail() {
                   </button>
                 </div>
                 <p className="mt-1 text-[11px] text-ink-dim">
-                  {formatRelative(entry.createdAt)}
+                  {formatEntryDate(entry.createdAt)}{" "}
+                  <span className="opacity-70">
+                    ({formatRelative(entry.createdAt)})
+                  </span>
                 </p>
               </li>
             ))}

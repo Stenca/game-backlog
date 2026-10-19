@@ -52,6 +52,7 @@ export type GameDetails = {
   releaseDate?: string;
   playtime?: number;
   genres: string[];
+  developers: string[];
   availablePlatforms: Platform[];
 };
 
