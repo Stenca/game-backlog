@@ -20,7 +20,12 @@ export default function Header() {
               <span className="text-base">
                 Welcome back,{" "}
                 <span className="font-medium text-accent">
-                  {user.displayName}
+                  <Link
+                    to="/profile"
+                    className="text-sm transition-colors hover:text-ink"
+                  >
+                    {user.displayName || user.username}
+                  </Link>
                 </span>
               </span>
               <button

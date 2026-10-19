@@ -4,6 +4,7 @@ import GameDetail from "./routes/GameDetail";
 import Games from "./routes/Games";
 import Landing from "./routes/Landing";
 import Login from "./routes/Login";
+import Profile from "./routes/Profile";
 import Register from "./routes/Register";
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -17,6 +18,7 @@ function App() {
         <Route path="register" element={<Register />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/:id" element={<GameDetail />} />
         </Route>
