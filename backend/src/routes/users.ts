@@ -25,7 +25,7 @@ usersRouter.patch(
   validate(updateProfileSchema),
   async (req: AuthedRequest, res) => {
     try {
-      const { username, email } = req.body;
+      const { username, displayName, email } = req.body;
       const user = await User.findById(req.userId);
       if (!user) {
         res.status(404).json({ error: "User not found" });
@@ -47,9 +47,19 @@ usersRouter.patch(
         }
         user.email = email;
       }
+
+      if (displayName && displayName !== user.displayName) {
+        user.displayName = displayName;
+      }
+
       await user.save();
       res.json({
-        user: { id: user.id, username: user.username, email: user.email },
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          email: user.email,
+        },
       });
     } catch (err: any) {
       if (err?.code === 11000) {

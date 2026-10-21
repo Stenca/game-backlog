@@ -19,7 +19,7 @@ app.use("/api/games", gamesRouter);
 
 app.use("/api/auth", authRouter);
 
-app.use("/api/user", usersRouter);
+app.use("/api/users", usersRouter);
 
 app.use("/api/journal", journalRouter);
 
