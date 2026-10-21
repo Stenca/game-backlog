@@ -16,7 +16,12 @@ usersRouter.get("/me", async (req: AuthedRequest, res) => {
     return;
   }
   res.json({
-    user: { id: user.id, username: user.username, email: user.email },
+    user: {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      email: user.email,
+    },
   });
 });
 

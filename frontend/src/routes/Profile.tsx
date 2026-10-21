@@ -7,7 +7,6 @@ export default function Profile() {
   const login = useAuthStore((s) => s.login);
   const token = useAuthStore((s) => s.token);
 
-  // Profile form state
   const [username, setUsername] = useState(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
@@ -15,7 +14,6 @@ export default function Profile() {
   const [profileSuccess, setProfileSuccess] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
 
-  // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,7 +43,6 @@ export default function Profile() {
         body: JSON.stringify(payload),
       });
 
-      // Update the store with the new user data
       login(token!, data.user);
       setProfileSuccess("Profile updated.");
     } catch (err) {

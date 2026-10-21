@@ -30,6 +30,9 @@ const userGameSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-userGameSchema.index({ userId: 1, gameId: 1 }, { unique: true });
+userGameSchema.index(
+  { userId: 1, gameId: 1, "platform.name": 1 },
+  { unique: true },
+);
 
 export const UserGame = mongoose.model("UserGame", userGameSchema);
