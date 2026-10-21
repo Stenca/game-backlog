@@ -71,9 +71,11 @@ export default function GameCard({ game }: Props) {
         )}
       </div>
 
-      <div className="truncate text-xs font-medium text-ink">
-        {game.game.title}
-      </div>
+      <Link to={`/games/${game._id}`} className="mt-1 block">
+        <div className="truncate text-xs font-medium text-ink-muted">
+          {game.game.title}
+        </div>
+      </Link>
     </li>
   );
 }
