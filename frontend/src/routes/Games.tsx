@@ -11,6 +11,7 @@ import GameSearch from "../components/GameSearch";
 import GameCard from "../components/GameCard";
 import { useGameStore } from "../stores/gameStore";
 import bonfireImg from "../assets/bonfire.png";
+import { STATUS_COLOR } from "../utils/status";
 
 export default function Games() {
   const games = useGameStore((s) => s.games);
@@ -23,11 +24,17 @@ export default function Games() {
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [status, setStatus] = useState<Status>("backlog");
   const [searchKey, setSearchKey] = useState(0);
-
+  const [filter, setFilter] = useState<Status | "all">("all");
   const [page, setPage] = useState(1);
   const PER_PAGE = 24;
-  const totalPages = Math.ceil(games.length / PER_PAGE);
-  const paginatedGames = games.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const filteredGames =
+    filter === "all" ? games : games.filter((g) => g.status === filter);
+  const totalPages = Math.ceil(filteredGames.length / PER_PAGE);
+  const paginatedGames = filteredGames.slice(
+    (page - 1) * PER_PAGE,
+    page * PER_PAGE,
+  );
 
   useEffect(() => {
     load();
@@ -35,7 +42,7 @@ export default function Games() {
 
   useEffect(() => {
     setPage(1);
-  }, [games.length]);
+  }, [games.length, filter]);
 
   async function handleSelect(result: SearchResult) {
     setSelected(result);
@@ -180,10 +187,46 @@ export default function Games() {
 
         {loading && <p className="text-sm text-ink-muted">Loading…</p>}
 
-        {!loading && games.length === 0 && (
-          <p className="text-sm text-ink-muted">
-            No games yet. Search above to add one.
-          </p>
+        <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
+          <button
+            onClick={() => setFilter("all")}
+            className={`cursor-pointer rounded border px-4 py-1.5 text-sm font-medium transition-colors ${
+              filter === "all"
+                ? "border-ink bg-ink text-bg"
+                : "border-border bg-surface-2 text-ink-muted hover:border-accent hover:text-accent"
+            }`}
+          >
+            All
+          </button>
+
+          {STATUSES.map((s) => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`cursor-pointer rounded border px-4 py-1.5no text-sm font-medium transition-colors ${
+                filter === s
+                  ? `border-transparent ${STATUS_COLOR[s]} text-black`
+                  : "border-border bg-surface-2 text-ink-muted hover:border-accent hover:text-accent"
+              }`}
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {!loading && filteredGames.length === 0 && (
+          <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
+            <p className="text-base text-ink">
+              {games.length === 0
+                ? "No games yet."
+                : `No games marked as ${filter}.`}
+            </p>
+            <p className="mt-1 text-sm text-ink-muted">
+              {games.length === 0
+                ? "Search above to add your first one."
+                : "Try changing the filter or adding a new game."}
+            </p>
+          </div>
         )}
 
         {paginatedGames.length > 0 && (
@@ -193,6 +236,7 @@ export default function Games() {
             ))}
           </ul>
         )}
+
         {totalPages > 1 && (
           <div className="mt-8 flex items-center justify-center gap-4">
             <button
