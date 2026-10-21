@@ -86,7 +86,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
               setOpen(true);
             }
           }}
-          placeholder="Search a game..."
+          placeholder="Search a game to add..."
           disabled={!!selected}
           className="w-full rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-60"
         />

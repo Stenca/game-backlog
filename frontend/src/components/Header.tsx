@@ -29,7 +29,6 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Right: Nav */}
         <nav className="flex items-center gap-6">
           {user ? (
             <>

@@ -24,9 +24,18 @@ export default function Games() {
   const [status, setStatus] = useState<Status>("backlog");
   const [searchKey, setSearchKey] = useState(0);
 
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 24;
+  const totalPages = Math.ceil(games.length / PER_PAGE);
+  const paginatedGames = games.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [games.length]);
 
   async function handleSelect(result: SearchResult) {
     setSelected(result);
@@ -177,12 +186,33 @@ export default function Games() {
           </p>
         )}
 
-        {games.length > 0 && (
+        {paginatedGames.length > 0 && (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {games.map((g) => (
+            {paginatedGames.map((g) => (
               <GameCard key={g._id} game={g} />
             ))}
           </ul>
+        )}
+        {totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-ink-muted">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
         )}
       </main>
     </div>
