@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import {
-  STATUSES,
-  type JournalEntry,
-  type Status,
-  type UserGame,
-} from "../types/Game";
+import { type JournalEntry, type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
-import { STATUS_COLOR } from "../utils/status";
 import { formatEntryDate, formatRelative } from "../utils/date";
 import GameCover from "../components/GameCover";
 import StatusMenu from "../components/StatusMenu";
+import PlatformBadge from "../components/PlatformBadge";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -147,7 +142,7 @@ export default function GameDetail() {
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <StatusMenu status={game.status} onChange={handleStatusChange} />
-            <span className="text-sm text-ink-muted">{game.platform.name}</span>
+            <PlatformBadge platform={game.platform} size="md" />
           </div>
           {error && (
             <p className="mt-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-400">

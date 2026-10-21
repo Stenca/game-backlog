@@ -15,3 +15,7 @@ export const STATUS_COLOR: Record<Status, string> = {
   dropped: "bg-red-700",
   wishlist: "bg-purple-700",
 };
+
+export function getStatusColor(status: Status): string {
+  return STATUS_COLOR[status] ?? "bg-ink-dim";
+}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { STATUSES, type Status } from "../types/Game";
-import { STATUS_COLOR } from "../utils/status";
+import { getStatusColor } from "../utils/status";
 
 type Props = {
   status: Status;
@@ -44,7 +44,7 @@ export default function StatusMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`cursor-pointer rounded font-medium uppercase tracking-wide text-black transition-colors ${buttonSize} ${STATUS_COLOR[status]}`}
+        className={`cursor-pointer rounded font-medium uppercase tracking-wide text-black transition-colors ${buttonSize} ${getStatusColor(status)}`}
       >
         {status}
       </button>

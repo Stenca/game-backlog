@@ -4,6 +4,7 @@ import { useGameStore } from "../stores/gameStore";
 import { Link } from "react-router-dom";
 import GameCover from "./GameCover";
 import StatusMenu from "./StatusMenu";
+import PlatformBadge from "./PlatformBadge";
 
 type Props = {
   game: UserGame;
@@ -46,6 +47,9 @@ export default function GameCard({ game }: Props) {
           </div>
         ) : (
           <>
+            <div className="pointer-events-none absolute left-1 top-1 z-10">
+              <PlatformBadge platform={game.platform} size="sm" />
+            </div>
             <div className="absolute bottom-1 left-1">
               <StatusMenu
                 status={game.status}
@@ -67,12 +71,9 @@ export default function GameCard({ game }: Props) {
         )}
       </div>
 
-      <Link to={`/games/${game._id}`} className="mt-1.5 block">
-        <div className="truncate text-xs font-medium text-ink">
-          {game.game.title}
-        </div>
-        <div className="text-[11px] text-ink-muted">{game.platform.name}</div>
-      </Link>
+      <div className="truncate text-xs font-medium text-ink">
+        {game.game.title}
+      </div>
     </li>
   );
 }
