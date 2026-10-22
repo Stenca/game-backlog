@@ -22,18 +22,18 @@ export default function GameCard({ game }: Props) {
 
   return (
     <li className="group">
-      <div className="relative aspect-3/4 overflow-hidden rounded bg-surface-2">
+      <div className="relative aspect-3/4 w-full overflow-hidden rounded">
         <Link to={`/games/${game._id}`} className="block h-full w-full">
           <GameCover game={game} />
         </Link>
 
         {confirmDelete ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 p-3 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 p-3 text-center">
             <p className="text-xs font-medium text-ink">Delete ?</p>
             <div className="flex gap-2">
               <button
                 onClick={handleConfirmDelete}
-                className="cursor-pointer rounded bg-red-700 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-red-600"
+                className="cursor-pointer rounded bg-destructive px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-red-600"
               >
                 Yes
               </button>
@@ -63,7 +63,7 @@ export default function GameCard({ game }: Props) {
 
             <button
               onClick={() => setConfirmDelete(true)}
-              className="absolute right-1 top-1 cursor-pointer rounded bg-black/70 px-1.5 py-0.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+              className="absolute right-1 top-1 cursor-pointer rounded bg-black/70 px-1.5 py-0.5 text-xs text-ink opacity-0 transition-opacity group-hover:opacity-100"
             >
               ×
             </button>

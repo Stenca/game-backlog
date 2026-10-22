@@ -11,7 +11,15 @@ import GameSearch from "../components/GameSearch";
 import GameCard from "../components/GameCard";
 import { useGameStore } from "../stores/gameStore";
 import bonfireImg from "../assets/bonfire.png";
-import { STATUS_COLOR } from "../utils/status";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export default function Games() {
   const games = useGameStore((s) => s.games);
@@ -25,11 +33,21 @@ export default function Games() {
   const [status, setStatus] = useState<Status>("backlog");
   const [searchKey, setSearchKey] = useState(0);
   const [filter, setFilter] = useState<Status | "all">("all");
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const PER_PAGE = 24;
 
-  const filteredGames =
-    filter === "all" ? games : games.filter((g) => g.status === filter);
+  const uniquePlatforms = Array.from(
+    new Set(games.map((g) => g.platform.name)),
+  ).sort();
+
+  const filteredGames = games.filter((g) => {
+    const matchesStatus = filter === "all" || g.status === filter;
+    const matchesPlatform =
+      platformFilter === "all" || g.platform.name === platformFilter;
+    return matchesStatus && matchesPlatform;
+  });
+
   const totalPages = Math.ceil(filteredGames.length / PER_PAGE);
   const paginatedGames = filteredGames.slice(
     (page - 1) * PER_PAGE,
@@ -42,7 +60,7 @@ export default function Games() {
 
   useEffect(() => {
     setPage(1);
-  }, [games.length, filter]);
+  }, [games.length, filter, platformFilter]);
 
   async function handleSelect(result: SearchResult) {
     setSelected(result);
@@ -89,7 +107,7 @@ export default function Games() {
           <div className="mb-5 flex flex-wrap items-baseline">
             <img src={bonfireImg} alt="" className="h-12 w-12 object-contain" />
             <h1 className="mr-4 text-6xl font-bold tracking-tight text-ink">
-              <span className="text-accent">Bon</span>fire.
+              <span className="text-brand">Bon</span>fire.
             </h1>
             <p className="text-lg text-ink-muted">Your journey, remembered.</p>
           </div>
@@ -137,50 +155,59 @@ export default function Games() {
               </div>
 
               <div className="mt-3 flex gap-2">
-                <select
+                <Select
                   value={platform?.name ?? ""}
-                  onChange={(e) => {
+                  onValueChange={(value) => {
                     const p = details.availablePlatforms.find(
-                      (x) => x.name === e.target.value,
+                      (x) => x.name === value,
                     );
                     setPlatform(p ?? null);
                   }}
-                  className="rounded border border-border bg-surface-2 px-3 py-1.5 text-sm text-ink focus:outline-none"
                 >
-                  <option value="">Select platform</option>
-                  {details.availablePlatforms.map((p) => (
-                    <option key={p.slug ?? p.name} value={p.name}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
+                    {" "}
+                    <SelectValue placeholder="Select platform" />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    {" "}
+                    {details.availablePlatforms.map((p) => (
+                      <SelectItem key={p.slug ?? p.name} value={p.name}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <select
+                <Select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as Status)}
-                  className="rounded border border-border bg-surface-2 px-3 py-1.5 text-sm text-ink focus:outline-none"
+                  onValueChange={(value) => setStatus(value as Status)}
                 >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent alignItemWithTrigger={false}>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <button
+                <Button
                   type="submit"
                   disabled={!platform}
-                  className="rounded bg-accent px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Add
-                </button>
+                </Button>
               </div>
             </>
           )}
         </form>
 
         {error && (
-          <p className="mb-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-400">
+          <p className="mb-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         )}
@@ -188,30 +215,52 @@ export default function Games() {
         {loading && <p className="text-sm text-ink-muted">Loading…</p>}
 
         <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
-          <button
-            onClick={() => setFilter("all")}
-            className={`cursor-pointer rounded border px-4 py-1.5 text-sm font-medium transition-colors ${
-              filter === "all"
-                ? "border-ink bg-ink text-bg"
-                : "border-border bg-surface-2 text-ink-muted hover:border-accent hover:text-accent"
-            }`}
+          <Select
+            value={filter}
+            onValueChange={(value) => setFilter(value as Status | "all")}
           >
-            All
-          </button>
-
-          {STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className={`cursor-pointer rounded border px-4 py-1.5no text-sm font-medium transition-colors ${
-                filter === s
-                  ? `border-transparent ${STATUS_COLOR[s]} text-black`
-                  : "border-border bg-surface-2 text-ink-muted hover:border-accent hover:text-accent"
-              }`}
+            <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
+              <SelectValue placeholder="Filter">
+                {filter === "all"
+                  ? "All Games"
+                  : filter.charAt(0).toUpperCase() + filter.slice(1)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent
+              alignItemWithTrigger={false}
+              className="border-border bg-surface text-ink"
             >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
+              <SelectItem value="all">All Games</SelectItem>
+              {STATUSES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={platformFilter}
+            onValueChange={(value) => setPlatformFilter(value ?? "all")}
+          >
+            <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
+              <SelectValue placeholder="Platform">
+                {platformFilter === "all" ? "All Platforms" : platformFilter}
+              </SelectValue>
+            </SelectTrigger>
+
+            <SelectContent
+              alignItemWithTrigger={false}
+              className="border-border bg-surface text-ink"
+            >
+              <SelectItem value="all">All Platforms</SelectItem>
+              {uniquePlatforms.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {!loading && filteredGames.length === 0 && (
@@ -242,7 +291,7 @@ export default function Games() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
             >
               Previous
             </button>
@@ -252,7 +301,7 @@ export default function Games() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
             </button>

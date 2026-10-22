@@ -73,7 +73,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
   }
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative z-50">
       <div className="flex gap-2">
         <input
           value={query}
@@ -88,7 +88,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
           }}
           placeholder="Search a game to add..."
           disabled={!!selected}
-          className="w-full rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-60"
+          className="w-full rounded border border-border bg-surface-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand hover:text-brand! focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
         />
         {selected && (
           <button
@@ -102,12 +102,12 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
       </div>
 
       {open && results.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-h-96 w-full overflow-auto rounded border border-border bg-surface shadow-lg">
+        <ul className="absolute mt-1 max-h-96 w-full overflow-auto rounded border border-border bg-surface shadow-lg">
           {results.map((r) => (
             <li
               key={r.rawgId}
               onClick={() => handlePick(r)}
-              className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
+              className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
             >
               {r.coverUrl && (
                 <img
@@ -117,7 +117,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
                 />
               )}
               <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-ink">
+                <div className="truncate text-sm font-medium text-ink group-hover:text-brand">
                   {r.title}
                 </div>
                 {r.released && (

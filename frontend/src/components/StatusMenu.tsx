@@ -58,7 +58,7 @@ export default function StatusMenu({
               key={s}
               onClick={() => handleSelect(s)}
               className={`block w-full cursor-pointer text-left transition-colors hover:bg-surface-2 ${itemSize} ${
-                s === status ? "text-accent" : "text-ink"
+                s === status ? "text-brand" : "text-ink"
               }`}
             >
               {s}

@@ -88,9 +88,12 @@ export default function GameDetail() {
 
   if (error && !game) {
     return (
-      <main className="mx-auito max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-6 py-8">
         <p className="text-sm text-ink-muted">{error}</p>
-        <Link to="/games" className="mt- inline-block text-sm text-accent">
+        <Link
+          to="/games"
+          className=" inline-block text-sm text-brand hover:text-brand-hover transition-colors"
+        >
           ← Back to games
         </Link>
       </main>
@@ -101,7 +104,10 @@ export default function GameDetail() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
-      <Link to="/games" className="mt- inline-block text-sm text-accent">
+      <Link
+        to="/games"
+        className=" inline-block text-sm text-brand hover:text-brand-hover transition-colors"
+      >
         ← Back to games
       </Link>
 
@@ -158,15 +164,21 @@ export default function GameDetail() {
           <textarea
             value={newEntry}
             onChange={(e) => setNewEntry(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
             placeholder="What happened today?"
             rows={3}
-            className="w-full resize-none rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none"
+            className="w-full resize-none rounded border border-border bg-surface-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus-visible:ring-0 focus:border-brand hover:border-brand focus:outline-none"
           />
           <div className="mt-2 flex justify-end">
             <button
               type="submit"
               disabled={submitting || !newEntry.trim()}
-              className="cursor-pointer rounded bg-accent px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+              className="cursor-pointer rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
             >
               {submitting ? "Saving…" : "Add entry"}
             </button>
@@ -182,7 +194,7 @@ export default function GameDetail() {
             {entries.map((entry) => (
               <li
                 key={entry._id}
-                className="group rounded border border-border bg-surface px-4 py-3"
+                className="group rounded border border-border hover:text-brand! bg-surface-2/60 px-4 py-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <p className="whitespace-pre-wrap text-sm text-ink">
@@ -190,7 +202,7 @@ export default function GameDetail() {
                   </p>
                   <button
                     onClick={() => handleDeleteEntry(entry._id)}
-                    className="cursor-pointer text-xs text-ink-dim opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400"
+                    className="cursor-pointer text-xs text-ink-dim opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                   >
                     Delete
                   </button>

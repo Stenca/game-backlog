@@ -10,7 +10,7 @@ export const STATUS_ORDER: Record<Status, number> = {
 
 export const STATUS_COLOR: Record<Status, string> = {
   backlog: "bg-ink-dim",
-  playing: "bg-accent",
+  playing: "bg-brand",
   completed: "bg-green-700",
   dropped: "bg-red-700",
   wishlist: "bg-purple-700",

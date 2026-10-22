@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore, type User } from "../stores/authStore";
 import { apiFetch } from "../api";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -35,7 +37,7 @@ export default function Register() {
   }
 
   return (
-    <div className="mx-auto max-w-sm px-6 py-16">
+    <div className="mx-auto mt-16 max-w-sm rounded border border-border bg-background p-8">
       <h1 className="mb-2 text-3xl font-bold tracking-tight text-ink">
         Create an account
       </h1>
@@ -44,7 +46,7 @@ export default function Register() {
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
+        <Input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -53,18 +55,18 @@ export default function Register() {
           required
           minLength={3}
           maxLength={20}
-          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
         />
-        <input
+        <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           autoComplete="email"
           required
-          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
         />
-        <input
+        <Input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -72,7 +74,7 @@ export default function Register() {
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
         />
 
         <p className="text-xs text-ink-dim">
@@ -86,19 +88,19 @@ export default function Register() {
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
-          className="mt-2 rounded bg-accent px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-accent-hover"
+          className="mt-2 w-full rounded bg-brand text-background hover:bg-brand-hover"
         >
           Create account
-        </button>
+        </Button>
       </form>
 
       <p className="mt-6 text-center text-xs text-ink-muted">
         Already have an account?{" "}
         <Link
           to="/login"
-          className="text-accent transition-colors hover:text-accent-hover"
+          className="text-brand transition-colors hover:text-brand-hover"
         >
           Log in
         </Link>
