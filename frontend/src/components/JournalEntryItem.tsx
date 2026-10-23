@@ -1,31 +1,37 @@
 import { useState } from "react";
 import { useAuthStore } from "../stores/authStore";
+import { useJournalStore } from "../stores/journalStore";
 import type { JournalEntry } from "../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import FileUpload from "./FileUpload";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import { apiFetch } from "../api";
+import AttachmentPreview from "@/components/AttachmentPreview";
 
 type Props = {
   entry: JournalEntry;
-  onUpdate: (updatedEntry: JournalEntry) => void;
-  onDelete: (entryId: string) => void;
 };
 
-export default function JournalEntryItem({ entry, onUpdate, onDelete }: Props) {
-  const [editing, setEditing] = useState(false);
+export default function JournalEntryItem({ entry }: Props) {
   const [editBody, setEditBody] = useState(entry.body || "");
   const [editImage, setEditImage] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState("");
+
   const token = useAuthStore((s) => s.token);
+  const editingId = useJournalStore((s) => s.editingId);
+  const setEditingId = useJournalStore((s) => s.setEditingId);
+  const updateEntry = useJournalStore((s) => s.updateEntry);
+  const removeEntry = useJournalStore((s) => s.removeEntry);
+
+  const isEditing = editingId === entry._id;
 
   function startEdit() {
-    setEditing(true);
     setEditBody(entry.body || "");
     setEditImage(null);
     setRemoveImage(false);
+    setEditingId(entry._id);
   }
 
   async function handleSave(e: React.SubmitEvent) {
@@ -58,8 +64,7 @@ export default function JournalEntryItem({ entry, onUpdate, onDelete }: Props) {
       if (!res.ok) throw new Error("Failed to update entry");
 
       const updated = await res.json();
-      onUpdate(updated);
-      setEditing(false);
+      updateEntry(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     }
@@ -68,7 +73,7 @@ export default function JournalEntryItem({ entry, onUpdate, onDelete }: Props) {
   async function handleConfirmDelete() {
     try {
       await apiFetch(`/api/journal/${entry._id}`, { method: "DELETE" });
-      onDelete(entry._id);
+      removeEntry(entry._id);
       setConfirmOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
@@ -77,7 +82,7 @@ export default function JournalEntryItem({ entry, onUpdate, onDelete }: Props) {
 
   return (
     <li className="group relative rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand">
-      {editing ? (
+      {isEditing ? (
         <form onSubmit={handleSave} className="flex flex-col gap-3">
           <textarea
             value={editBody}
@@ -87,28 +92,21 @@ export default function JournalEntryItem({ entry, onUpdate, onDelete }: Props) {
             placeholder="Update your thoughts..."
           />
 
-          {entry.imageUrl && !removeImage && !editImage && (
-            <div className="flex items-center justify-between rounded border border-border bg-surface-2 p-2">
-              <span className="text-xs text-ink-muted">Current image</span>
-              <button
-                type="button"
-                onClick={() => setRemoveImage(true)}
-                className="cursor-pointer text-xs font-medium text-destructive hover:text-red-300"
-              >
-                Remove
-              </button>
-            </div>
-          )}
-
           <FileUpload onChange={setEditImage} file={editImage} />
+          {entry.imageUrl && !removeImage && !editImage && (
+            <AttachmentPreview
+              name={entry.imageUrl.split("/").pop() || "Current image"}
+              onRemove={() => setRemoveImage(true)}
+            />
+          )}
 
           {error && <p className="text-xs text-destructive">{error}</p>}
 
           <div className="flex justify-end gap-3 border-t border-border/50 pt-3">
             <button
               type="button"
-              onClick={() => setEditing(false)}
-              className="cursor-pointer text-xs font-medium text-ink-muted hover:text-ink"
+              onClick={() => setEditingId(null)}
+              className="cursor-pointer text-xs font-medium text-ink-muted  hover:text-brand transition-colors"
             >
               Cancel
             </button>

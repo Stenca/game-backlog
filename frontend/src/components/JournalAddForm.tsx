@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { useAuthStore } from "../stores/authStore";
+import { useJournalStore } from "../stores/journalStore";
 import FileUpload from "./FileUpload";
-import type { JournalEntry } from "../types/Game";
 
 type Props = {
   gameId: string;
-  onEntryAdded: (entry: JournalEntry) => void;
 };
 
-export default function JournalAddForm({ gameId, onEntryAdded }: Props) {
+export default function JournalAddForm({ gameId }: Props) {
   const [newEntry, setNewEntry] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
   const token = useAuthStore((s) => s.token);
+  const addEntry = useJournalStore((s) => s.addEntry);
+  const setEditingId = useJournalStore((s) => s.setEditingId);
 
   async function handleAdd(e: React.SubmitEvent) {
     e.preventDefault();
@@ -40,7 +42,8 @@ export default function JournalAddForm({ gameId, onEntryAdded }: Props) {
       }
 
       const created = await res.json();
-      onEntryAdded(created);
+      addEntry(created);
+      setEditingId(null);
 
       setNewEntry("");
       setImageFile(null);
@@ -66,12 +69,18 @@ export default function JournalAddForm({ gameId, onEntryAdded }: Props) {
 
       {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
-      <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
-        <FileUpload onChange={(file) => setImageFile(file)} file={imageFile} />
+      <div className="mt-3 flex flex-col gap-3 border-t border-border/50 pt-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="w-full min-w-0 flex-1">
+          <FileUpload
+            onChange={(file) => setImageFile(file)}
+            file={imageFile}
+          />
+        </div>
+
         <button
           type="submit"
           disabled={submitting || (!newEntry.trim() && !imageFile)}
-          className="rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? "Saving…" : "Post"}
         </button>

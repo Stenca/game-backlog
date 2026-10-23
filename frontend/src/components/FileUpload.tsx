@@ -1,11 +1,5 @@
-import { Paperclip, X } from "lucide-react";
-import {
-  Attachment,
-  AttachmentContent,
-  AttachmentTitle,
-  AttachmentActions,
-  AttachmentAction,
-} from "@/components/ui/attachment";
+import { Paperclip } from "lucide-react";
+import AttachmentPreview from "./AttachmentPreview";
 
 type Props = {
   onChange: (file: File | null) => void;
@@ -35,23 +29,11 @@ export default function FileUpload({ onChange, file }: Props) {
       </label>
 
       {file && (
-        <Attachment className="w-fit max-w-full border-border bg-surface-2">
-          <AttachmentContent>
-            <AttachmentTitle className="flex flex-wrap items-center gap-x-1 text-ink break-all">
-              <span>{file.name}</span>
-              <span className="text-ink-dim">- {formatBytes(file.size)}</span>
-            </AttachmentTitle>
-          </AttachmentContent>
-          <AttachmentActions>
-            <AttachmentAction
-              onClick={() => onChange(null)}
-              className="text-ink-muted hover:text-red-400"
-              aria-label="Remove file"
-            >
-              <X className="h-4 w-4" />
-            </AttachmentAction>
-          </AttachmentActions>
-        </Attachment>
+        <AttachmentPreview
+          name={file.name}
+          size={formatBytes(file.size)}
+          onRemove={() => onChange(null)}
+        />
       )}
     </div>
   );
