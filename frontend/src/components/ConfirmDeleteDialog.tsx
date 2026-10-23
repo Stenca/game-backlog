@@ -34,12 +34,12 @@ export default function ConfirmDeleteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="border-border bg-surface-2 text-ink hover:bg-surface">
+          <AlertDialogCancel className="border-border bg-surface-2 text-ink hover:bg-surface hover:text-brand">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-red-600 text-white hover:bg-red-700"
+            className="bg-destructive text-white hover:bg-red-600"
           >
             Delete entry
           </AlertDialogAction>

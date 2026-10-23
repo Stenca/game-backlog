@@ -99,7 +99,7 @@ export default function Profile() {
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-accent focus:outline-none"
+              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-brand focus:outline-none"
             />
             <span className="text-[11px] text-ink-dim">
               Lowercase, 3–20 characters. Used for login. Must be unique.
@@ -128,7 +128,7 @@ export default function Profile() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-accent focus:outline-none"
+              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -146,7 +146,7 @@ export default function Profile() {
           <button
             type="submit"
             disabled={profileSaving}
-            className="mt-2 cursor-pointer self-end rounded bg-accent px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-2 cursor-pointer self-end rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             {profileSaving ? "Saving…" : "Save changes"}
           </button>
@@ -170,7 +170,7 @@ export default function Profile() {
               onChange={(e) => setCurrentPassword(e.target.value)}
               autoComplete="current-password"
               required
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -185,7 +185,7 @@ export default function Profile() {
               autoComplete="new-password"
               required
               minLength={8}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
             <span className="text-[11px] text-ink-dim">
               At least 8 characters, with an uppercase letter, lowercase letter,
@@ -203,7 +203,7 @@ export default function Profile() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
               required
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
+              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -221,7 +221,7 @@ export default function Profile() {
           <button
             type="submit"
             disabled={passwordSaving}
-            className="mt-2 cursor-pointer self-end rounded bg-accent px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-2 cursor-pointer self-end rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             {passwordSaving ? "Updating…" : "Update password"}
           </button>

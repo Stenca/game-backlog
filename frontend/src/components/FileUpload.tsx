@@ -1,26 +1,30 @@
+import { Paperclip, X } from "lucide-react";
+import {
+  Attachment,
+  AttachmentContent,
+  AttachmentTitle,
+  AttachmentActions,
+  AttachmentAction,
+} from "@/components/ui/attachment";
+
 type Props = {
   onChange: (file: File | null) => void;
   file: File | null;
 };
 
+function formatBytes(bytes: number) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+}
+
 export default function FileUpload({ onChange, file }: Props) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex w-full flex-col gap-2">
       <label className="inline-flex w-fit cursor-pointer items-center gap-2 whitespace-nowrap text-xs font-medium text-ink-muted transition-colors hover:text-brand">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
+        <Paperclip className="h-4 w-4 shrink-0" />
         <span>{file ? "Change image" : "Add image"}</span>
         <input
           type="file"
@@ -31,9 +35,23 @@ export default function FileUpload({ onChange, file }: Props) {
       </label>
 
       {file && (
-        <span className="max-w-37.5 truncate text-xs text-ink-dim">
-          {file.name}
-        </span>
+        <Attachment className="w-fit max-w-full border-border bg-surface-2">
+          <AttachmentContent>
+            <AttachmentTitle className="flex flex-wrap items-center gap-x-1 text-ink break-all">
+              <span>{file.name}</span>
+              <span className="text-ink-dim">- {formatBytes(file.size)}</span>
+            </AttachmentTitle>
+          </AttachmentContent>
+          <AttachmentActions>
+            <AttachmentAction
+              onClick={() => onChange(null)}
+              className="text-ink-muted hover:text-red-400"
+              aria-label="Remove file"
+            >
+              <X className="h-4 w-4" />
+            </AttachmentAction>
+          </AttachmentActions>
+        </Attachment>
       )}
     </div>
   );
