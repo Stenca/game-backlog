@@ -9,6 +9,7 @@ import {
 } from "../validators/journal.js";
 import multer from "multer";
 import cloudinary from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 const journalRouter = Router();
 
@@ -48,6 +49,7 @@ journalRouter.post(
         res
           .status(400)
           .json({ error: "Entry cannot be empty. Add text or an image." });
+        return;
       }
 
       const userGame = await UserGame.findOne({
@@ -93,20 +95,63 @@ journalRouter.post(
 
 journalRouter.patch(
   "/:id",
+  upload.single("image"),
   validate(updateJournalEntrySchema),
   async (req: AuthedRequest, res) => {
     try {
-      const entry = await JournalEntry.findOneAndUpdate(
-        { _id: req.params.id, userId: req.userId },
-        req.body,
-        { new: true, runValidators: true },
-      );
+      const entry = (await JournalEntry.findOne({
+        _id: req.params.id,
+        userId: req.userId,
+      })) as mongoose.HydratedDocument<any>;
+
       if (!entry) {
         res.status(404).json({ error: "Entry not found" });
         return;
       }
+
+      if (req.body.body !== undefined) {
+        entry.body = req.body.body.trim() || undefined;
+      }
+
+      const removeImage =
+        req.body.removeImage === "true" || req.body.removeImage === true;
+      if (removeImage && entry.imagePublicId) {
+        await cloudinary.uploader.destroy(entry.imagePublicId, {
+          invalidate: true,
+          resource_type: "image",
+        });
+        entry.imageUrl = undefined;
+        entry.imagePublicId = undefined;
+      }
+
+      if (req.file) {
+        if (entry.imagePublicId) {
+          await cloudinary.uploader.destroy(entry.imagePublicId, {
+            invalidate: true,
+            resource_type: "image",
+          });
+        }
+
+        const b64 = Buffer.from(req.file.buffer).toString("base64");
+        const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: "bonfire-journals",
+        });
+
+        entry.imageUrl = result.secure_url;
+        entry.imagePublicId = result.public_id;
+      }
+
+      if (!entry.body && !entry.imageUrl) {
+        await entry.deleteOne();
+        res.status(204).end();
+        return;
+      }
+
+      await entry.save();
       res.json(entry);
-    } catch {
+    } catch (err) {
+      console.error("[journal/patch]", err);
       res.status(400).json({ error: "Invalid id" });
     }
   },

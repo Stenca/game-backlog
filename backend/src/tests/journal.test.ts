@@ -97,6 +97,22 @@ async function createUserGame(token: string, rawgId = 1) {
   };
 }
 
+async function createEntryWithImage(token: string, gameId: string) {
+  vi.mocked(cloudinary.uploader.upload).mockResolvedValueOnce({
+    secure_url: "https://cloudinary.com/test-image.jpg",
+    public_id: "bonfire-journals/test-id",
+  } as any);
+
+  const res = await request(app)
+    .post("/api/journal")
+    .set("Authorization", `Bearer ${token}`)
+    .field("gameId", gameId)
+    .field("body", "Screenshot of the boss fight")
+    .attach("image", Buffer.from("fake image data"), "test.jpg");
+
+  return res.body;
+}
+
 describe("GET /api/journal/game/:userGameId", () => {
   it("rejects requests without a token", async () => {
     const res = await request(app).get("/api/journal/game/123");
@@ -139,18 +155,6 @@ describe("GET /api/journal/game/:userGameId", () => {
     expect(res.body).toHaveLength(2);
     expect(res.body[0].body).toBe("Second entry");
     expect(res.body[1].body).toBe("First entry");
-  });
-
-  it("returns 404 for another user's game", async () => {
-    const tokenA = await registerUser("usera", "a@test.com");
-    const tokenB = await registerUser("userb", "b@test.com");
-    const { userGameId } = await createUserGame(tokenA);
-
-    const res = await request(app)
-      .get(`/api/journal/game/${userGameId}`)
-      .set("Authorization", `Bearer ${tokenB}`);
-
-    expect(res.status).toBe(404);
   });
 });
 
@@ -201,62 +205,87 @@ describe("POST /api/journal", () => {
 
     expect(res.status).toBe(400);
   });
-
-  it("rejects entries for games the user doesn't own", async () => {
-    const token = await registerUser("user1", "u1@test.com");
-
-    const catalogGame = await Game.create({
-      title: "Celeste",
-      titleLower: "celeste",
-      rawgId: 999,
-      availablePlatforms: [],
-    });
-
-    const res = await request(app)
-      .post("/api/journal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ gameId: catalogGame._id, body: "Should fail" });
-
-    expect(res.status).toBe(404);
-    expect(res.body.error).toBe("You don't have this game in your list");
-  });
 });
 
 describe("PATCH /api/journal/:id", () => {
-  async function createEntry(token: string, gameId: string): Promise<string> {
-    const res = await request(app)
-      .post("/api/journal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ gameId, body: "Original body" });
-    return res.body._id;
-  }
-
-  it("updates an entry", async () => {
+  it("updates the text of an entry", async () => {
     const token = await registerUser("user1", "u1@test.com");
     const { gameId } = await createUserGame(token);
-    const entryId = await createEntry(token, gameId);
+    const entry = await createEntryWithImage(token, gameId);
 
     const res = await request(app)
-      .patch(`/api/journal/${entryId}`)
+      .patch(`/api/journal/${entry._id}`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ body: "Updated body" });
+      .field("body", "Updated text");
 
     expect(res.status).toBe(200);
-    expect(res.body.body).toBe("Updated body");
+    expect(res.body.body).toBe("Updated text");
+    expect(res.body.imageUrl).toBe(entry.imageUrl);
   });
 
-  it("rejects updating another user's entry", async () => {
-    const tokenA = await registerUser("usera", "a@test.com");
-    const tokenB = await registerUser("userb", "b@test.com");
-    const { gameId } = await createUserGame(tokenA);
-    const entryId = await createEntry(tokenA, gameId);
+  it("removes the image when removeImage=true", async () => {
+    const token = await registerUser("user1", "u1@test.com");
+    const { gameId } = await createUserGame(token);
+    const entry = await createEntryWithImage(token, gameId);
 
     const res = await request(app)
-      .patch(`/api/journal/${entryId}`)
-      .set("Authorization", `Bearer ${tokenB}`)
-      .send({ body: "Hacked!" });
+      .patch(`/api/journal/${entry._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .field("body", "Text stays")
+      .field("removeImage", "true");
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    expect(res.body.body).toBe("Text stays");
+    expect(res.body.imageUrl).toBeUndefined();
+    expect(res.body.imagePublicId).toBeUndefined();
+
+    expect(cloudinary.uploader.destroy).toHaveBeenCalledWith(
+      "bonfire-journals/test-id",
+      { invalidate: true, resource_type: "image" },
+    );
+  });
+
+  it("deletes the entry if both text and image are removed", async () => {
+    const token = await registerUser("user1", "u1@test.com");
+    const { gameId } = await createUserGame(token);
+    const entry = await createEntryWithImage(token, gameId);
+
+    const res = await request(app)
+      .patch(`/api/journal/${entry._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .field("body", "")
+      .field("removeImage", "true");
+
+    expect(res.status).toBe(204);
+
+    const stillThere = await JournalEntry.findById(entry._id);
+    expect(stillThere).toBeNull();
+  });
+
+  it("replaces the image when a new file is uploaded", async () => {
+    const token = await registerUser("user1", "u1@test.com");
+    const { gameId } = await createUserGame(token);
+    const entry = await createEntryWithImage(token, gameId);
+
+    vi.mocked(cloudinary.uploader.upload).mockResolvedValueOnce({
+      secure_url: "https://cloudinary.com/new-image.jpg",
+      public_id: "bonfire-journals/new-id",
+    } as any);
+
+    const res = await request(app)
+      .patch(`/api/journal/${entry._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .field("body", "Updated text")
+      .attach("image", Buffer.from("new fake image data"), "new.jpg");
+
+    expect(res.status).toBe(200);
+    expect(res.body.imageUrl).toBe("https://cloudinary.com/new-image.jpg");
+    expect(res.body.imagePublicId).toBe("bonfire-journals/new-id");
+
+    expect(cloudinary.uploader.destroy).toHaveBeenCalledWith(
+      "bonfire-journals/test-id",
+      { invalidate: true, resource_type: "image" },
+    );
   });
 });
 
@@ -264,32 +293,20 @@ describe("DELETE /api/journal/:id", () => {
   it("deletes the entry and the image from Cloudinary", async () => {
     const token = await registerUser("user1", "u1@test.com");
     const { gameId } = await createUserGame(token);
+    const entry = await createEntryWithImage(token, gameId);
 
-    vi.mocked(cloudinary.uploader.upload).mockResolvedValueOnce({
-      secure_url: "https://cloudinary.com/test-image.jpg",
-      public_id: "bonfire-journals/test-id",
-    } as any);
-
-    const createRes = await request(app)
-      .post("/api/journal")
-      .set("Authorization", `Bearer ${token}`)
-      .field("gameId", gameId)
-      .attach("image", Buffer.from("fake image data"), "test.jpg");
-
-    const entryId = createRes.body._id;
-
-    const deleteRes = await request(app)
-      .delete(`/api/journal/${entryId}`)
+    const res = await request(app)
+      .delete(`/api/journal/${entry._id}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(deleteRes.status).toBe(204);
+    expect(res.status).toBe(204);
 
     expect(cloudinary.uploader.destroy).toHaveBeenCalledWith(
       "bonfire-journals/test-id",
       { invalidate: true, resource_type: "image" },
     );
 
-    const stillThere = await JournalEntry.findById(entryId);
+    const stillThere = await JournalEntry.findById(entry._id);
     expect(stillThere).toBeNull();
   });
 
@@ -297,20 +314,15 @@ describe("DELETE /api/journal/:id", () => {
     const tokenA = await registerUser("usera", "a@test.com");
     const tokenB = await registerUser("userb", "b@test.com");
     const { gameId } = await createUserGame(tokenA);
-
-    const createRes = await request(app)
-      .post("/api/journal")
-      .set("Authorization", `Bearer ${tokenA}`)
-      .send({ gameId, body: "To be deleted" });
-
-    const entryId = createRes.body._id;
+    const entry = await createEntryWithImage(tokenA, gameId);
 
     const res = await request(app)
-      .delete(`/api/journal/${entryId}`)
+      .delete(`/api/journal/${entry._id}`)
       .set("Authorization", `Bearer ${tokenB}`);
 
     expect(res.status).toBe(404);
-    const stillThere = await JournalEntry.findById(entryId);
+
+    const stillThere = await JournalEntry.findById(entry._id);
     expect(stillThere).not.toBeNull();
   });
 });

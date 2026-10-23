@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { apiFetch } from "../api";
 import { useAuthStore } from "../stores/authStore";
 import type { JournalEntry } from "../types/Game";
-import { formatRelative } from "@/utils/date";
+import { formatEntryDate, formatRelative } from "@/utils/date";
+import FileUpload from "./FileUpload";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 
 type Props = {
   gameId: string;
@@ -13,10 +15,15 @@ export default function Journal({ gameId, userGameId }: Props) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [newEntry, setNewEntry] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState("");
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   const token = useAuthStore((s) => s.token);
 
@@ -33,9 +40,9 @@ export default function Journal({ gameId, userGameId }: Props) {
     }
   }
 
-  useEffect(() => {
+  useState(() => {
     loadEntries();
-  }, [userGameId]);
+  });
 
   async function handleAddEntry(e: React.SubmitEvent) {
     e.preventDefault();
@@ -63,6 +70,7 @@ export default function Journal({ gameId, userGameId }: Props) {
 
       const created = await res.json();
       setEntries([created, ...entries]);
+      setEditingId(null);
       setNewEntry("");
       setImageFile(null);
     } catch (err) {
@@ -72,26 +80,85 @@ export default function Journal({ gameId, userGameId }: Props) {
     }
   }
 
-  async function handleDelete(entryId: string) {
+  function startEdit(entry: JournalEntry) {
+    setEditingId(entry._id);
+    setEditBody(entry.body || "");
+    setEditImage(null);
+    setRemoveImage(false);
+  }
+
+  async function handleUpdateEntry(e: React.SubmitEvent) {
+    e.preventDefault();
+    if (!editingId) return;
+
+    const entry = entries.find((en) => en._id === editingId);
+    if (!entry) return;
+
+    const hasBody = !!editBody.trim();
+    const hasNewImage = !!editImage;
+    const hasExistingImage = !!entry.imageUrl && !removeImage;
+
+    const willBeEmpty = !hasBody && !hasNewImage && !hasExistingImage;
+
+    if (willBeEmpty) {
+      setIsConfirmDeleteOpen(true);
+      return;
+    }
+
+    await saveEntry();
+  }
+
+  async function saveEntry() {
+    if (!editingId) return;
+
     try {
-      await apiFetch(`/api/journal/${entryId}`, { method: "DELETE" });
-      setEntries(entries.filter((e) => e._id !== entryId));
+      const formData = new FormData();
+      formData.append("body", editBody);
+      if (removeImage) formData.append("removeImage", "true");
+      if (editImage) formData.append("image", editImage);
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/journal/${editingId}`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        },
+      );
+
+      if (!res.ok) throw new Error("Failed to update entry");
+
+      const updated = await res.json();
+      setEntries(entries.map((en) => (en._id === editingId ? updated : en)));
+      setEditingId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete entry");
+      setError(err instanceof Error ? err.message : "Update failed");
     }
   }
 
-  function formatEntryDate(iso: string) {
-    const d = new Date(iso);
-    const now = new Date();
-    if (d.toDateString() === now.toDateString()) {
-      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  async function handleConfirmDelete() {
+    if (entryToDelete) {
+      try {
+        await apiFetch(`/api/journal/${entryToDelete}`, { method: "DELETE" });
+        setEntries(entries.filter((e) => e._id !== entryToDelete));
+        setEntryToDelete(null);
+        setIsConfirmDeleteOpen(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to delete entry");
+      }
+      return;
     }
-    return d.toLocaleDateString([], {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+
+    if (editingId) {
+      try {
+        await apiFetch(`/api/journal/${editingId}`, { method: "DELETE" });
+        setEntries(entries.filter((e) => e._id !== editingId));
+        setEditingId(null);
+        setIsConfirmDeleteOpen(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to delete entry");
+      }
+    }
   }
 
   if (loading)
@@ -99,91 +166,167 @@ export default function Journal({ gameId, userGameId }: Props) {
 
   return (
     <section className="mt-10 border-t border-border pt-8">
-      <h2 className="text-xl font-semibold text-ink">Journal</h2>
+      <h2 className="mb-4 text-xl font-semibold text-ink">Journal</h2>
 
-      <form onSubmit={handleAddEntry} className="mt-4">
+      <form
+        onSubmit={handleAddEntry}
+        className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors focus-within:border-brand hover:border-brand"
+      >
         <textarea
           value={newEntry}
           onChange={(e) => setNewEntry(e.target.value)}
-          placeholder="What happened today? (Optional if you upload an image)"
+          placeholder="What happened today?"
           rows={3}
-          className="w-full resize-none rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand focus:outline-none"
+          className="w-full resize-none bg-transparent text-sm text-ink placeholder:text-ink-dim focus:outline-none"
         />
 
-        <div className="mt-2 flex items-center gap-4">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            className="text-sm text-ink-muted file:mr-4 file:rounded file:border-0 file:bg-surface-2 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-ink hover:file:bg-surface"
+        <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
+          <FileUpload
+            onChange={(file) => setImageFile(file)}
+            file={imageFile}
           />
 
           <button
             type="submit"
             disabled={submitting || (!newEntry.trim() && !imageFile)}
-            className="ml-auto rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {submitting ? "Saving…" : "Add entry"}
+            {submitting ? "Saving…" : "Post"}
           </button>
         </div>
       </form>
 
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && (
+        <p className="mt-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       {entries.length === 0 ? (
-        <p className="mt-6 text-sm text-ink-muted">
+        <p className="mt-8 text-center text-sm text-ink-muted">
           No entries yet. Write your first note above.
         </p>
       ) : (
-        <ul className="mt-6 flex flex-col gap-4">
+        <ul className="mt-8 flex flex-col gap-4">
           {entries.map((entry) => (
             <li
               key={entry._id}
-              className="group overflow-hidden rounded-lg border border-border bg-surface transition-colors hover:border-brand/50"
+              className="group relative rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand/40"
             >
-              <div className="flex flex-col p-4">
-                {/* Text Content */}
-                {entry.body && (
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">
-                    {entry.body}
-                  </p>
-                )}
+              {editingId === entry._id ? (
+                <form
+                  onSubmit={handleUpdateEntry}
+                  className="flex flex-col gap-3"
+                >
+                  <textarea
+                    value={editBody}
+                    onChange={(e) => setEditBody(e.target.value)}
+                    rows={3}
+                    className="w-full resize-none rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
+                    placeholder="Update your thoughts..."
+                  />
 
-                {/* Image Content */}
-                {entry.imageUrl && (
-                  <div
-                    className={`relative overflow-hidden rounded-md border border-border/50 bg-surface-2 ${entry.body ? "mt-3" : ""}`}
-                  >
-                    <img
-                      src={entry.imageUrl}
-                      alt="Journal attachment"
-                      className="max-h-[500px] w-full object-contain"
-                      loading="lazy"
-                    />
+                  {entry.imageUrl && !removeImage && !editImage && (
+                    <div className="flex items-center justify-between rounded border border-border bg-surface-2 p-2">
+                      <span className="text-xs text-ink-muted">
+                        Current image
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setRemoveImage(true)}
+                        className="cursor-pointer text-xs font-medium text-destructive hover:text-red-600"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
+                  <FileUpload
+                    onChange={(file) => setEditImage(file)}
+                    file={editImage}
+                  />
+
+                  <div className="flex justify-end gap-3 border-t border-border/50 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                      className="cursor-pointer text-xs font-medium text-ink-muted hover:text-ink"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="cursor-pointer rounded bg-brand px-4 py-1.5 text-xs font-medium text-black transition-colors hover:bg-brand-hover"
+                    >
+                      Save changes
+                    </button>
                   </div>
-                )}
-
-                {/* Footer: Date and Delete Button */}
-                <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
-                  <p className="text-[11px] font-medium text-ink-dim uppercase tracking-wider">
-                    {formatEntryDate(entry.createdAt)}
-                    <span className="ml-2 opacity-60 normal-case">
-                      ({formatRelative(entry.createdAt)})
+                </form>
+              ) : (
+                <>
+                  <div className="mb-2 flex items-start justify-between gap-4">
+                    <span className="text-[11px] font-medium tracking-wide text-ink-dim uppercase">
+                      {formatEntryDate(entry.createdAt)}
+                      <span className="ml-2 normal-case opacity-60">
+                        ({formatRelative(entry.createdAt)})
+                      </span>
                     </span>
-                  </p>
 
-                  <button
-                    onClick={() => handleDelete(entry._id)}
-                    className="cursor-pointer text-xs text-ink-dim opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+                    <div className="flex shrink-0 gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        onClick={() => startEdit(entry)}
+                        className="cursor-pointer text-xs text-ink-muted hover:text-brand"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEntryToDelete(entry._id);
+                          setIsConfirmDeleteOpen(true);
+                        }}
+                        className="cursor-pointer text-xs text-ink-muted hover:text-destructive"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {entry.body && (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap text-ink">
+                      {entry.body}
+                    </p>
+                  )}
+
+                  {entry.imageUrl && (
+                    <div className="mt-3 overflow-hidden rounded-lg border border-border/50 bg-surface-2">
+                      <img
+                        src={entry.imageUrl}
+                        alt="Journal attachment"
+                        className="max-h-125 w-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
             </li>
           ))}
         </ul>
       )}
+      <ConfirmDeleteDialog
+        open={isConfirmDeleteOpen}
+        onOpenChange={(open) => {
+          setIsConfirmDeleteOpen(open);
+          if (!open) setEntryToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={entryToDelete ? "Delete entry?" : "Delete empty entry?"}
+        description={
+          entryToDelete
+            ? "Are you sure you want to permanently delete this journal entry?"
+            : "You are removing both the text and the image from this entry. This will permanently delete it from your journal."
+        }
+      />
     </section>
   );
 }

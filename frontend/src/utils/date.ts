@@ -4,17 +4,18 @@ import calendar from "dayjs/plugin/calendar";
 
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
-export function formatEntryDate(iso: string): string {
-  const d = dayjs(iso);
-  const now = dayjs();
 
-  if (d.isSame(now, "day")) {
-    return d.format("HH:mm");
+export function formatEntryDate(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  if (d.isSame(now, "year")) {
-    return d.format("MMM D");
-  }
-  return d.format("MMM D, YYYY");
+  return d.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function formatRelative(iso: string): string {
