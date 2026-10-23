@@ -20,10 +20,20 @@ import { Game } from "../models/Game.js";
 import { User } from "../models/User.js";
 import { JournalEntry } from "../models/JournalEntry.js";
 import * as rawgService from "../services/rawg.js";
+import cloudinary from "../utils/cloudinary.js";
 
 vi.mock("../services/rawg.js", () => ({
   searchGames: vi.fn(),
   getGameDetails: vi.fn(),
+}));
+
+vi.mock("../utils/cloudinary.js", () => ({
+  default: {
+    uploader: {
+      upload: vi.fn(),
+      destroy: vi.fn(),
+    },
+  },
 }));
 
 const app = express();
@@ -145,7 +155,7 @@ describe("GET /api/journal/game/:userGameId", () => {
 });
 
 describe("POST /api/journal", () => {
-  it("creates a new journal entry", async () => {
+  it("creates a text-only entry", async () => {
     const token = await registerUser("user1", "u1@test.com");
     const { gameId } = await createUserGame(token);
 
@@ -156,17 +166,38 @@ describe("POST /api/journal", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.body).toBe("Just beat the first boss!");
-    expect(res.body._id).toBeDefined();
+    expect(res.body.imageUrl).toBeUndefined();
   });
 
-  it("rejects empty entry text", async () => {
+  it("creates an image-only entry", async () => {
+    const token = await registerUser("user1", "u1@test.com");
+    const { gameId } = await createUserGame(token);
+
+    vi.mocked(cloudinary.uploader.upload).mockResolvedValueOnce({
+      secure_url: "https://cloudinary.com/test-image.jpg",
+      public_id: "bonfire-journals/test-id",
+    } as any);
+
+    const res = await request(app)
+      .post("/api/journal")
+      .set("Authorization", `Bearer ${token}`)
+      .field("gameId", gameId)
+      .attach("image", Buffer.from("fake image data"), "test.jpg");
+
+    expect(res.status).toBe(201);
+    expect(res.body.imageUrl).toBe("https://cloudinary.com/test-image.jpg");
+    expect(res.body.imagePublicId).toBe("bonfire-journals/test-id");
+    expect(res.body.body).toBeUndefined();
+  });
+
+  it("rejects entries with neither text nor image", async () => {
     const token = await registerUser("user1", "u1@test.com");
     const { gameId } = await createUserGame(token);
 
     const res = await request(app)
       .post("/api/journal")
       .set("Authorization", `Bearer ${token}`)
-      .send({ gameId, body: "   " });
+      .send({ gameId });
 
     expect(res.status).toBe(400);
   });
@@ -230,24 +261,34 @@ describe("PATCH /api/journal/:id", () => {
 });
 
 describe("DELETE /api/journal/:id", () => {
-  async function createEntry(token: string, gameId: string): Promise<string> {
-    const res = await request(app)
-      .post("/api/journal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ gameId, body: "To be deleted" });
-    return res.body._id;
-  }
-
-  it("deletes an entry", async () => {
+  it("deletes the entry and the image from Cloudinary", async () => {
     const token = await registerUser("user1", "u1@test.com");
     const { gameId } = await createUserGame(token);
-    const entryId = await createEntry(token, gameId);
 
-    const res = await request(app)
+    vi.mocked(cloudinary.uploader.upload).mockResolvedValueOnce({
+      secure_url: "https://cloudinary.com/test-image.jpg",
+      public_id: "bonfire-journals/test-id",
+    } as any);
+
+    const createRes = await request(app)
+      .post("/api/journal")
+      .set("Authorization", `Bearer ${token}`)
+      .field("gameId", gameId)
+      .attach("image", Buffer.from("fake image data"), "test.jpg");
+
+    const entryId = createRes.body._id;
+
+    const deleteRes = await request(app)
       .delete(`/api/journal/${entryId}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(res.status).toBe(204);
+    expect(deleteRes.status).toBe(204);
+
+    expect(cloudinary.uploader.destroy).toHaveBeenCalledWith(
+      "bonfire-journals/test-id",
+      { invalidate: true, resource_type: "image" },
+    );
+
     const stillThere = await JournalEntry.findById(entryId);
     expect(stillThere).toBeNull();
   });
@@ -256,7 +297,13 @@ describe("DELETE /api/journal/:id", () => {
     const tokenA = await registerUser("usera", "a@test.com");
     const tokenB = await registerUser("userb", "b@test.com");
     const { gameId } = await createUserGame(tokenA);
-    const entryId = await createEntry(tokenA, gameId);
+
+    const createRes = await request(app)
+      .post("/api/journal")
+      .set("Authorization", `Bearer ${tokenA}`)
+      .send({ gameId, body: "To be deleted" });
+
+    const entryId = createRes.body._id;
 
     const res = await request(app)
       .delete(`/api/journal/${entryId}`)

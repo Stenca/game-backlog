@@ -60,7 +60,8 @@ export type JournalEntry = {
   _id: string;
   userId: string;
   gameId: string;
-  body: string;
+  body?: string;
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 };

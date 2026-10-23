@@ -88,7 +88,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
           }}
           placeholder="Search a game to add..."
           disabled={!!selected}
-          className="w-full rounded border border-border bg-surface-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand hover:text-brand! focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
+          className="w-full rounded border border-border bg-surface-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
         />
         {selected && (
           <button
