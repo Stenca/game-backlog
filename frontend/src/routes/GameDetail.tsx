@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
@@ -8,39 +7,28 @@ import StatusMenu from "../components/StatusMenu";
 import PlatformBadge from "../components/PlatformBadge";
 import Journal from "../components/Journal";
 import Loading from "@/components/Loading";
+import { useQuery } from "@tanstack/react-query";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
-  const [game, setGame] = useState<UserGame | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const updateStatus = useGameStore((s) => s.updateStatus);
 
-  async function loadGame() {
-    if (!id) return;
-    setLoading(true);
-    setError("");
-    try {
-      const gameData = await apiFetch<UserGame>(`/api/games/${id}`);
-      setGame(gameData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load game");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadGame();
-  }, [id]);
+  const {
+    data: game,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["game", id],
+    queryFn: () => apiFetch<UserGame>(`/api/games/${id}`),
+    enabled: !!id,
+  });
 
   async function handleStatusChange(newStatus: Status) {
     if (!game) return;
-    const ok = await updateStatus(game._id, newStatus);
-    if (ok) setGame({ ...game, status: newStatus });
+    await updateStatus(game._id, newStatus);
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
         <Loading text="Loading game details…" fullScreen />
@@ -51,7 +39,7 @@ export default function GameDetail() {
   if (error && !game) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <p className="text-sm text-ink-muted">{error}</p>
+        <p className="text-sm text-ink-muted">{error.message}</p>
         <Link
           to="/games"
           className="mt-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover"
@@ -115,7 +103,7 @@ export default function GameDetail() {
 
           {error && (
             <p className="mt-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-400">
-              {error}
+              {error.message}
             </p>
           )}
         </div>

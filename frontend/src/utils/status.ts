@@ -19,3 +19,12 @@ export const STATUS_COLOR: Record<Status, string> = {
 export function getStatusColor(status: Status): string {
   return STATUS_COLOR[status] ?? "bg-ink-dim";
 }
+
+import type { UserGame } from "../types/Game";
+
+export function sortGames(games: UserGame[]): UserGame[] {
+  return [...games].sort((a, b) => {
+    const diff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+    return diff !== 0 ? diff : a.game.title.localeCompare(b.game.title);
+  });
+}

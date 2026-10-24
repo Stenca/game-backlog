@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { useAuthStore } from "../stores/authStore";
 import { useJournalStore } from "../stores/journalStore";
 import type { JournalEntry } from "../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import FileUpload from "./FileUpload";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
-import { apiFetch } from "../api";
 import AttachmentPreview from "@/components/AttachmentPreview";
 
 type Props = {
@@ -19,7 +17,6 @@ export default function JournalEntryItem({ entry }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState("");
 
-  const token = useAuthStore((s) => s.token);
   const editingId = useJournalStore((s) => s.editingId);
   const setEditingId = useJournalStore((s) => s.setEditingId);
   const updateEntry = useJournalStore((s) => s.updateEntry);
@@ -31,6 +28,7 @@ export default function JournalEntryItem({ entry }: Props) {
     setEditBody(entry.body || "");
     setEditImage(null);
     setRemoveImage(false);
+    setError("");
     setEditingId(entry._id);
   }
 
@@ -46,37 +44,21 @@ export default function JournalEntryItem({ entry }: Props) {
       return;
     }
 
-    try {
-      const formData = new FormData();
-      formData.append("body", editBody);
-      if (removeImage) formData.append("removeImage", "true");
-      if (editImage) formData.append("image", editImage);
+    const formData = new FormData();
+    formData.append("body", editBody);
+    if (removeImage) formData.append("removeImage", "true");
+    if (editImage) formData.append("image", editImage);
 
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/journal/${entry._id}`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to update entry");
-
-      const updated = await res.json();
-      updateEntry(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
-    }
+    const ok = await updateEntry(entry._id, entry.gameId, formData);
+    if (!ok) setError("Failed to update entry");
   }
 
   async function handleConfirmDelete() {
-    try {
-      await apiFetch(`/api/journal/${entry._id}`, { method: "DELETE" });
-      removeEntry(entry._id);
+    const ok = await removeEntry(entry._id, entry.gameId);
+    if (ok) {
       setConfirmOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+    } else {
+      setError("Failed to delete entry");
     }
   }
 
@@ -93,6 +75,7 @@ export default function JournalEntryItem({ entry }: Props) {
           />
 
           <FileUpload onChange={setEditImage} file={editImage} />
+
           {entry.imageUrl && !removeImage && !editImage && (
             <AttachmentPreview
               name={entry.imageUrl.split("/").pop() || "Current image"}
@@ -106,7 +89,7 @@ export default function JournalEntryItem({ entry }: Props) {
             <button
               type="button"
               onClick={() => setEditingId(null)}
-              className="cursor-pointer text-xs font-medium text-ink-muted  hover:text-brand transition-colors"
+              className="cursor-pointer text-xs font-medium text-ink-muted transition-colors hover:text-brand"
             >
               Cancel
             </button>

@@ -1,8 +1,10 @@
-import { useEffect } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import JournalAddForm from "./JournalAddForm";
 import JournalEntryItem from "./JournalEntryItem";
 import Loading from "@/components/Loading";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/api";
+import type { JournalEntry } from "@/types/Game";
 
 type Props = {
   gameId: string;
@@ -10,16 +12,23 @@ type Props = {
 };
 
 export default function Journal({ gameId, userGameId }: Props) {
-  const entries = useJournalStore((s) => s.entries);
-  const loading = useJournalStore((s) => s.loading);
-  const load = useJournalStore((s) => s.load);
   const editingId = useJournalStore((s) => s.editingId);
 
-  useEffect(() => {
-    if (userGameId) load(userGameId);
-  }, [userGameId, load]);
+  const {
+    data: entries = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["journal", gameId],
+    queryFn: () => apiFetch<JournalEntry[]>(`/api/journal/game/${userGameId}`),
+    enabled: !!userGameId,
+  });
 
-  if (loading) return <Loading text="Loading journal..." />;
+  if (isLoading) return <Loading text="Loading journal..." />;
+  if (error)
+    return (
+      <p className="text-sm text-destructive">{(error as Error).message}</p>
+    );
 
   return (
     <section className="mt-10 border-t border-border pt-8">

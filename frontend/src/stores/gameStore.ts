@@ -1,26 +1,7 @@
 import { create } from "zustand";
-import type { Status, UserGame } from "../types/Game";
 import { apiFetch } from "../api";
-import { STATUS_ORDER } from "../utils/status";
-
-function sortGames(games: UserGame[]): UserGame[] {
-  return [...games].sort((a, b) => {
-    const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-    return statusDiff !== 0
-      ? statusDiff
-      : a.game.title.localeCompare(b.game.title);
-  });
-}
-
-type GameStore = {
-  games: UserGame[];
-  loading: boolean;
-  error: string;
-  load: () => Promise<void>;
-  add: (payload: AddGamePayload) => Promise<boolean>;
-  updateStatus: (id: string, status: Status) => Promise<boolean>;
-  remove: (id: string) => Promise<boolean>;
-};
+import { queryClient } from "../main";
+import type { Status, UserGame } from "../types/Game";
 
 type AddGamePayload = {
   rawgId: number;
@@ -30,70 +11,63 @@ type AddGamePayload = {
   notes?: string;
 };
 
-export const useGameStore = create<GameStore>((set, get) => ({
-  games: [],
-  loading: false,
-  error: "",
+type GameStore = {
+  add: (payload: AddGamePayload) => Promise<boolean>;
+  updateStatus: (id: string, status: Status) => Promise<boolean>;
+  remove: (id: string) => Promise<boolean>;
+};
 
-  load: async () => {
-    set({ loading: true, error: "" });
-    try {
-      const data = await apiFetch<UserGame[]>("/api/games");
-      set({ games: sortGames(data), loading: false });
-    } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Failed to load",
-        loading: false,
-      });
-    }
-  },
-
+export const useGameStore = create<GameStore>(() => ({
   add: async (payload) => {
-    set({ error: "" });
     try {
-      await apiFetch<UserGame>("/api/games", {
+      const created = await apiFetch<UserGame>("/api/games", {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      await get().load();
+
+      queryClient.setQueryData<UserGame[]>(["games"], (old = []) => [
+        created,
+        ...old,
+      ]);
+
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : "Failed to add" });
+      console.error("[gameStore/add]", err);
       return false;
     }
   },
 
   updateStatus: async (id, status) => {
-    set({ error: "" });
     try {
       const updated = await apiFetch<UserGame>(`/api/games/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
-      set((state) => ({
-        games: sortGames(state.games.map((g) => (g._id === id ? updated : g))),
-      }));
+
+      queryClient.setQueryData<UserGame[]>(["games"], (old = []) =>
+        old.map((g) => (g._id === id ? updated : g)),
+      );
+
+      queryClient.setQueryData<UserGame>(["game", id], updated);
+
       return true;
     } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Failed to update status",
-      });
+      console.error("[gameStore/updateStatus]", err);
       return false;
     }
   },
 
   remove: async (id) => {
-    set({ error: "" });
     try {
       await apiFetch(`/api/games/${id}`, { method: "DELETE" });
-      set((state) => ({
-        games: state.games.filter((g) => g._id !== id),
-      }));
+
+      queryClient.setQueryData<UserGame[]>(["games"], (old = []) =>
+        old.filter((g) => g._id !== id),
+      );
+
       return true;
     } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : "Failed to delete game",
-      });
+      console.error("[gameStore/remove]", err);
       return false;
     }
   },

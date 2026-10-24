@@ -1,58 +1,82 @@
 import { useState } from "react";
-import { useAuthStore, type User } from "../stores/authStore";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../api";
+import { useAuthStore, type User } from "../stores/authStore";
 
 export default function Profile() {
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
   const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
 
   const [username, setUsername] = useState(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
-  const [profileSaving, setProfileSaving] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [passwordSaving, setPasswordSaving] = useState(false);
 
-  async function handleProfileSubmit(e: React.SubmitEvent) {
+  const updateProfileMutation = useMutation({
+    mutationFn: (payload: Record<string, string>) =>
+      apiFetch<{ user: User }>("/api/users/me", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: (data) => {
+      login(token!, data.user);
+      queryClient.setQueryData(["profile"], data.user);
+      setProfileSuccess("Profile updated.");
+      setProfileError("");
+    },
+    onError: (err) => {
+      setProfileError(err instanceof Error ? err.message : "Update failed");
+      setProfileSuccess("");
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: (payload: Record<string, string>) =>
+      apiFetch("/api/users/me/password", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      setPasswordSuccess("Password updated.");
+      setPasswordError("");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (err) => {
+      setPasswordError(err instanceof Error ? err.message : "Update failed");
+      setPasswordSuccess("");
+    },
+  });
+
+  function handleProfileSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setProfileError("");
     setProfileSuccess("");
-    setProfileSaving(true);
 
-    try {
-      const payload: Record<string, string> = {};
-      if (username !== user?.username) payload.username = username;
-      if (displayName !== user?.displayName) payload.displayName = displayName;
-      if (email !== user?.email) payload.email = email;
+    const payload: Record<string, string> = {};
+    if (username !== user?.username) payload.username = username;
+    if (displayName !== user?.displayName) payload.displayName = displayName;
+    if (email !== user?.email) payload.email = email;
 
-      if (Object.keys(payload).length === 0) {
-        setProfileSuccess("Nothing to update.");
-        return;
-      }
-
-      const data = await apiFetch<{ user: User }>("/api/users/me", {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-
-      login(token!, data.user);
-      setProfileSuccess("Profile updated.");
-    } catch (err) {
-      setProfileError(err instanceof Error ? err.message : "Update failed");
-    } finally {
-      setProfileSaving(false);
+    if (Object.keys(payload).length === 0) {
+      setProfileSuccess("Nothing to update.");
+      return;
     }
+
+    updateProfileMutation.mutate(payload);
   }
 
-  async function handlePasswordSubmit(e: React.SubmitEvent) {
+  function handlePasswordSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setPasswordError("");
     setPasswordSuccess("");
@@ -62,21 +86,7 @@ export default function Profile() {
       return;
     }
 
-    setPasswordSaving(true);
-    try {
-      await apiFetch("/api/users/me/password", {
-        method: "PATCH",
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      setPasswordSuccess("Password updated.");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : "Update failed");
-    } finally {
-      setPasswordSaving(false);
-    }
+    updatePasswordMutation.mutate({ currentPassword, newPassword });
   }
 
   if (!user) return null;
@@ -113,7 +123,7 @@ export default function Profile() {
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-accent focus:outline-none"
+              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-brand focus:outline-none"
             />
             <span className="text-[11px] text-ink-dim">
               What other users see. 1–20 characters.
@@ -145,10 +155,10 @@ export default function Profile() {
 
           <button
             type="submit"
-            disabled={profileSaving}
+            disabled={updateProfileMutation.isPending}
             className="mt-2 cursor-pointer self-end rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {profileSaving ? "Saving…" : "Save changes"}
+            {updateProfileMutation.isPending ? "Saving…" : "Save changes"}
           </button>
         </form>
       </section>
@@ -187,10 +197,6 @@ export default function Profile() {
               minLength={8}
               className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
-            <span className="text-[11px] text-ink-dim">
-              At least 8 characters, with an uppercase letter, lowercase letter,
-              and number.
-            </span>
           </label>
 
           <label className="flex flex-col gap-1">
@@ -220,10 +226,10 @@ export default function Profile() {
 
           <button
             type="submit"
-            disabled={passwordSaving}
+            disabled={updatePasswordMutation.isPending}
             className="mt-2 cursor-pointer self-end rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {passwordSaving ? "Updating…" : "Update password"}
+            {updatePasswordMutation.isPending ? "Updating…" : "Update password"}
           </button>
         </form>
       </section>

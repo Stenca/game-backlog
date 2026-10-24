@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import type { SearchResult } from "../types/Game";
+import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import { Spinner } from "@/components/ui/spinner";
+import type { SearchResult } from "../types/Game";
 
 type Props = {
   onSelect: (result: SearchResult) => void;
@@ -11,10 +12,8 @@ type Props = {
 
 export default function GameSearch({ onSelect, selected, onClear }: Props) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const timeoutRef = useRef<number | undefined>(undefined);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,55 +30,42 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
   }, []);
 
   useEffect(() => {
-    if (selected) return;
-    clearTimeout(timeoutRef.current);
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
-      setResults([]);
-      setOpen(false);
-      return;
-    }
+  const { data: results = [], isFetching } = useQuery({
+    queryKey: ["gameSearch", debouncedQuery],
+    queryFn: () =>
+      apiFetch<SearchResult[]>(
+        `/api/games/search?q=${encodeURIComponent(debouncedQuery)}`,
+      ),
+    enabled: debouncedQuery.trim().length >= 2 && !selected,
 
-    setLoading(true);
-    timeoutRef.current = window.setTimeout(async () => {
-      try {
-        const data = await apiFetch<SearchResult[]>(
-          `/api/games/search?q=${encodeURIComponent(trimmed)}`,
-        );
-        setResults(data);
-        setOpen(true);
-      } catch {
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutRef.current);
-  }, [query, selected]);
+    placeholderData: (previousData) => previousData,
+  });
 
   function handlePick(result: SearchResult) {
     setQuery(result.title);
     setOpen(false);
-    setResults([]);
     onSelect(result);
   }
 
   function handleClear() {
     setQuery("");
+    setDebouncedQuery("");
     setOpen(false);
-    setResults([]);
     onClear();
   }
 
   return (
     <div ref={wrapperRef} className="relative z-50">
-      <div className="flex gap-2">
+      <div className="relative flex gap-2">
         <input
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
+            setOpen(true);
             if (selected) onClear();
           }}
           onFocus={() => {
@@ -89,8 +75,15 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
           }}
           placeholder="Search a game to add..."
           disabled={!!selected}
-          className="w-full rounded border border-border bg-surface-2/60 px-3 py-2 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
+          className="w-full rounded border border-border bg-surface-2/60 px-3 py-2 pr-10 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
         />
+
+        {isFetching && !selected && (
+          <div className="absolute top-2.5 right-3">
+            <Spinner className="h-4 w-4 text-ink-muted" />
+          </div>
+        )}
+
         {selected && (
           <button
             type="button"
@@ -130,12 +123,6 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
             </li>
           ))}
         </ul>
-      )}
-
-      {loading && !open && (
-        <div className="absolute right-3 top-3">
-          <Spinner className="h-4 w-4 text-ink-muted" />
-        </div>
       )}
     </div>
   );

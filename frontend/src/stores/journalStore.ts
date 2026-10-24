@@ -1,52 +1,87 @@
 import { create } from "zustand";
 import { apiFetch } from "../api";
+import { queryClient } from "../main";
 import type { JournalEntry } from "../types/Game";
+import { useAuthStore } from "@/stores/authStore";
 
 type JournalStore = {
-  entries: JournalEntry[];
   editingId: string | null;
-  loading: boolean;
-  error: string;
-  load: (userGameId: string) => Promise<void>;
   setEditingId: (id: string | null) => void;
-  addEntry: (entry: JournalEntry) => void;
-  updateEntry: (entry: JournalEntry) => void;
-  removeEntry: (id: string) => void;
+  addEntry: (gameId: string, formData: FormData) => Promise<boolean>;
+  updateEntry: (
+    id: string,
+    gameId: string,
+    formData: FormData,
+  ) => Promise<boolean>;
+  removeEntry: (id: string, gameId: string) => Promise<boolean>;
 };
 
 export const useJournalStore = create<JournalStore>((set) => ({
-  entries: [],
   editingId: null,
-  loading: false,
-  error: "",
+  setEditingId: (id) => set({ editingId: id }),
 
-  load: async (userGameId: string) => {
-    set({ loading: true, error: "", entries: [] });
+  addEntry: async (gameId: string, formData: FormData) => {
     try {
-      const data = await apiFetch<JournalEntry[]>(
-        `/api/journal/game/${userGameId}`,
+      const token = useAuthStore.getState().token;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/journal`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed to add entry");
+      const created = await res.json();
+
+      queryClient.setQueryData<JournalEntry[]>(
+        ["journal", gameId],
+        (old = []) => [created, ...old],
       );
-      set({ entries: data });
+      set({ editingId: null });
+      return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : "Failed to load" });
-    } finally {
-      set({ loading: false });
+      console.error(err);
+      return false;
     }
   },
 
-  setEditingId: (id) => set({ editingId: id }),
+  updateEntry: async (id: string, gameId: string, formData: FormData) => {
+    try {
+      const token = useAuthStore.getState().token;
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/journal/${id}`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        },
+      );
+      if (!res.ok) throw new Error("Failed to update entry");
+      const updated = await res.json();
 
-  addEntry: (entry) => set((state) => ({ entries: [entry, ...state.entries] })),
+      queryClient.setQueryData<JournalEntry[]>(
+        ["journal", gameId],
+        (old = []) => old.map((e) => (e._id === id ? updated : e)),
+      );
+      set({ editingId: null });
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  },
 
-  updateEntry: (updated) =>
-    set((state) => ({
-      entries: state.entries.map((e) => (e._id === updated._id ? updated : e)),
-      editingId: null,
-    })),
+  removeEntry: async (id: string, gameId: string) => {
+    try {
+      await apiFetch(`/api/journal/${id}`, { method: "DELETE" });
 
-  removeEntry: (id) =>
-    set((state) => ({
-      entries: state.entries.filter((e) => e._id !== id),
-      editingId: state.editingId === id ? null : state.editingId,
-    })),
+      queryClient.setQueryData<JournalEntry[]>(
+        ["journal", gameId],
+        (old = []) => old.filter((e) => e._id !== id),
+      );
+      set({ editingId: null });
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    }
+  },
 }));

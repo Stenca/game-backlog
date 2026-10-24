@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAuthStore } from "../stores/authStore";
 import { useJournalStore } from "../stores/journalStore";
 import FileUpload from "./FileUpload";
 
@@ -13,9 +12,7 @@ export default function JournalAddForm({ gameId }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const token = useAuthStore((s) => s.token);
   const addEntry = useJournalStore((s) => s.addEntry);
-  const setEditingId = useJournalStore((s) => s.setEditingId);
 
   async function handleAdd(e: React.SubmitEvent) {
     e.preventDefault();
@@ -24,34 +21,21 @@ export default function JournalAddForm({ gameId }: Props) {
     setSubmitting(true);
     setError("");
 
-    try {
-      const formData = new FormData();
-      formData.append("gameId", gameId);
-      if (newEntry.trim()) formData.append("body", newEntry.trim());
-      if (imageFile) formData.append("image", imageFile);
+    const formData = new FormData();
+    formData.append("gameId", gameId);
+    if (newEntry.trim()) formData.append("body", newEntry.trim());
+    if (imageFile) formData.append("image", imageFile);
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/journal`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+    const ok = await addEntry(gameId, formData);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to add entry");
-      }
-
-      const created = await res.json();
-      addEntry(created);
-      setEditingId(null);
-
+    if (ok) {
       setNewEntry("");
       setImageFile(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add entry");
-    } finally {
-      setSubmitting(false);
+    } else {
+      setError("Failed to add entry. Please try again.");
     }
+
+    setSubmitting(false);
   }
 
   return (

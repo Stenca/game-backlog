@@ -5,6 +5,7 @@ import {
   type Platform,
   type SearchResult,
   type Status,
+  type UserGame,
 } from "../types/Game";
 import { apiFetch } from "../api";
 import GameSearch from "../components/GameSearch";
@@ -21,12 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/Loading";
+import { useQuery } from "@tanstack/react-query";
+import { sortGames } from "@/utils/status";
 
 export default function Games() {
-  const games = useGameStore((s) => s.games);
-  const loading = useGameStore((s) => s.loading);
-  const error = useGameStore((s) => s.error);
-  const load = useGameStore((s) => s.load);
   const add = useGameStore((s) => s.add);
   const [selected, setSelected] = useState<SearchResult | null>(null);
   const [details, setDetails] = useState<GameDetails | null>(null);
@@ -36,6 +35,16 @@ export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+
+  const {
+    data: games = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["games"],
+    queryFn: () => apiFetch<UserGame[]>("/api/games"),
+  });
+
   const PER_PAGE = 24;
 
   const uniquePlatforms = Array.from(
@@ -49,15 +58,13 @@ export default function Games() {
     return matchesStatus && matchesPlatform;
   });
 
-  const totalPages = Math.ceil(filteredGames.length / PER_PAGE);
-  const paginatedGames = filteredGames.slice(
+  const sortedGames = sortGames(filteredGames);
+
+  const totalPages = Math.ceil(sortedGames.length / PER_PAGE);
+  const paginatedGames = sortedGames.slice(
     (page - 1) * PER_PAGE,
     page * PER_PAGE,
   );
-
-  useEffect(() => {
-    load();
-  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -209,11 +216,11 @@ export default function Games() {
 
         {error && (
           <p className="mb-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
-            {error}
+            {error.message}
           </p>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <Loading text="Loading your library" />
         ) : (
           <>
