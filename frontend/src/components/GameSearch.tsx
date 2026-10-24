@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { SearchResult } from "../types/Game";
 import { apiFetch } from "../api";
+import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   onSelect: (result: SearchResult) => void;
@@ -132,7 +133,9 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
       )}
 
       {loading && !open && (
-        <p className="mt-1 text-xs text-ink-dim">Searching…</p>
+        <div className="absolute right-3 top-3">
+          <Spinner className="h-4 w-4 text-ink-muted" />
+        </div>
       )}
     </div>
   );

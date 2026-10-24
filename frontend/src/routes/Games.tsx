@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import Loading from "@/components/Loading";
 
 export default function Games() {
   const games = useGameStore((s) => s.games);
@@ -212,100 +213,104 @@ export default function Games() {
           </p>
         )}
 
-        {loading && <p className="text-sm text-ink-muted">Loading…</p>}
+        {loading ? (
+          <Loading text="Loading your library" />
+        ) : (
+          <>
+            <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
+              <Select
+                value={filter}
+                onValueChange={(value) => setFilter(value as Status | "all")}
+              >
+                <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
+                  <SelectValue placeholder="Filter">
+                    {filter === "all"
+                      ? "All Games"
+                      : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent
+                  alignItemWithTrigger={false}
+                  className="border-border bg-surface text-ink"
+                >
+                  <SelectItem value="all">All Games</SelectItem>
+                  {STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
-          <Select
-            value={filter}
-            onValueChange={(value) => setFilter(value as Status | "all")}
-          >
-            <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
-              <SelectValue placeholder="Filter">
-                {filter === "all"
-                  ? "All Games"
-                  : filter.charAt(0).toUpperCase() + filter.slice(1)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent
-              alignItemWithTrigger={false}
-              className="border-border bg-surface text-ink"
-            >
-              <SelectItem value="all">All Games</SelectItem>
-              {STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select
+                value={platformFilter}
+                onValueChange={(value) => setPlatformFilter(value ?? "all")}
+              >
+                <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
+                  <SelectValue placeholder="Platform">
+                    {platformFilter === "all"
+                      ? "All Platforms"
+                      : platformFilter}
+                  </SelectValue>
+                </SelectTrigger>
 
-          <Select
-            value={platformFilter}
-            onValueChange={(value) => setPlatformFilter(value ?? "all")}
-          >
-            <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
-              <SelectValue placeholder="Platform">
-                {platformFilter === "all" ? "All Platforms" : platformFilter}
-              </SelectValue>
-            </SelectTrigger>
+                <SelectContent
+                  alignItemWithTrigger={false}
+                  className="border-border bg-surface text-ink"
+                >
+                  <SelectItem value="all">All Platforms</SelectItem>
+                  {uniquePlatforms.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <SelectContent
-              alignItemWithTrigger={false}
-              className="border-border bg-surface text-ink"
-            >
-              <SelectItem value="all">All Platforms</SelectItem>
-              {uniquePlatforms.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            {filteredGames.length === 0 ? (
+              <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
+                <p className="text-base text-ink">
+                  {games.length === 0
+                    ? "No games yet."
+                    : `No games marked as ${filter}.`}
+                </p>
+                <p className="mt-1 text-sm text-ink-muted">
+                  {games.length === 0
+                    ? "Search above to add your first one."
+                    : "Try changing the filter or adding a new game."}
+                </p>
+              </div>
+            ) : (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {paginatedGames.map((g) => (
+                  <GameCard key={g._id} game={g} />
+                ))}
+              </ul>
+            )}
 
-        {!loading && filteredGames.length === 0 && (
-          <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
-            <p className="text-base text-ink">
-              {games.length === 0
-                ? "No games yet."
-                : `No games marked as ${filter}.`}
-            </p>
-            <p className="mt-1 text-sm text-ink-muted">
-              {games.length === 0
-                ? "Search above to add your first one."
-                : "Try changing the filter or adding a new game."}
-            </p>
-          </div>
-        )}
-
-        {paginatedGames.length > 0 && (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {paginatedGames.map((g) => (
-              <GameCard key={g._id} game={g} />
-            ))}
-          </ul>
-        )}
-
-        {totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-ink-muted">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-ink-muted">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

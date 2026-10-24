@@ -7,6 +7,7 @@ import GameCover from "../components/GameCover";
 import StatusMenu from "../components/StatusMenu";
 import PlatformBadge from "../components/PlatformBadge";
 import Journal from "../components/Journal";
+import Loading from "@/components/Loading";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -42,7 +43,7 @@ export default function GameDetail() {
   if (loading) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <p className="text-sm text-ink-muted">Loading...</p>
+        <Loading text="Loading game details…" fullScreen />
       </main>
     );
   }

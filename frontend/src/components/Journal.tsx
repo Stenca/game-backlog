@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import JournalAddForm from "./JournalAddForm";
 import JournalEntryItem from "./JournalEntryItem";
+import Loading from "@/components/Loading";
 
 type Props = {
   gameId: string;
@@ -18,8 +19,7 @@ export default function Journal({ gameId, userGameId }: Props) {
     if (userGameId) load(userGameId);
   }, [userGameId, load]);
 
-  if (loading)
-    return <p className="text-sm text-ink-muted">Loading journal…</p>;
+  if (loading) return <Loading text="Loading journal..." />;
 
   return (
     <section className="mt-10 border-t border-border pt-8">
