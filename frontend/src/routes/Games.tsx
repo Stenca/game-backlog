@@ -13,17 +13,11 @@ import GameCard from "../components/GameCard";
 import { useGameStore } from "../stores/gameStore";
 import bonfireImg from "../assets/bonfire.png";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/Loading";
 import { useQuery } from "@tanstack/react-query";
 import { sortGames } from "@/utils/status";
+import FilterSelect from "@/components/FilterSelect";
 
 export default function Games() {
   const add = useGameStore((s) => s.add);
@@ -69,6 +63,19 @@ export default function Games() {
   useEffect(() => {
     setPage(1);
   }, [games.length, filter, platformFilter]);
+
+  const statusOptions = [
+    { label: "All Games", value: "all" },
+    ...STATUSES.map((s) => ({
+      label: s.charAt(0).toUpperCase() + s.slice(1),
+      value: s,
+    })),
+  ];
+
+  const platformOptions = [
+    { label: "All Platforms", value: "all" },
+    ...uniquePlatforms.map((p) => ({ label: p, value: p })),
+  ];
 
   async function handleSelect(result: SearchResult) {
     setSelected(result);
@@ -163,44 +170,32 @@ export default function Games() {
               </div>
 
               <div className="mt-3 flex gap-2">
-                <Select
+                <FilterSelect
                   value={platform?.name ?? ""}
-                  onValueChange={(value) => {
+                  onValueChange={(val) => {
                     const p = details.availablePlatforms.find(
-                      (x) => x.name === value,
+                      (x) => x.name === val,
                     );
                     setPlatform(p ?? null);
                   }}
-                >
-                  <SelectTrigger className="cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
-                    {" "}
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    {" "}
-                    {details.availablePlatforms.map((p) => (
-                      <SelectItem key={p.slug ?? p.name} value={p.name}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={details.availablePlatforms.map((p) => ({
+                    label: p.name,
+                    value: p.name,
+                  }))}
+                  placeholder="Select platform"
+                  className=" min-w-0"
+                />
 
-                <Select
+                <FilterSelect
                   value={status}
-                  onValueChange={(value) => setStatus(value as Status)}
-                >
-                  <SelectTrigger className="cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent alignItemWithTrigger={false}>
-                    {STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onValueChange={(val) => setStatus(val as Status)}
+                  options={STATUSES.map((s) => ({
+                    label: s.charAt(0).toUpperCase() + s.slice(1),
+                    value: s,
+                  }))}
+                  placeholder="Select status"
+                  className="min-w-0"
+                />
 
                 <Button
                   type="submit"
@@ -225,54 +220,19 @@ export default function Games() {
         ) : (
           <>
             <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
-              <Select
+              <FilterSelect
                 value={filter}
-                onValueChange={(value) => setFilter(value as Status | "all")}
-              >
-                <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
-                  <SelectValue placeholder="Filter">
-                    {filter === "all"
-                      ? "All Games"
-                      : filter.charAt(0).toUpperCase() + filter.slice(1)}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent
-                  alignItemWithTrigger={false}
-                  className="border-border bg-surface text-ink"
-                >
-                  <SelectItem value="all">All Games</SelectItem>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={(val) => setFilter(val as Status | "all")}
+                options={statusOptions}
+                placeholder="Filter by status"
+              />
 
-              <Select
+              <FilterSelect
                 value={platformFilter}
-                onValueChange={(value) => setPlatformFilter(value ?? "all")}
-              >
-                <SelectTrigger className="w-37 cursor-pointer rounded border border-border bg-surface-2 text-ink font-medium  focus:ring-0 hover:text-brand! focus-visible:ring-0 data-popup-open:border-brand! data-popup-open:text-brand! transition-colors">
-                  <SelectValue placeholder="Platform">
-                    {platformFilter === "all"
-                      ? "All Platforms"
-                      : platformFilter}
-                  </SelectValue>
-                </SelectTrigger>
-
-                <SelectContent
-                  alignItemWithTrigger={false}
-                  className="border-border bg-surface text-ink"
-                >
-                  <SelectItem value="all">All Platforms</SelectItem>
-                  {uniquePlatforms.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={(val) => setPlatformFilter(val ?? "all")}
+                options={platformOptions}
+                placeholder="Filter by platform"
+              />
             </div>
 
             {filteredGames.length === 0 ? (

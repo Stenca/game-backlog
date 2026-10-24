@@ -89,12 +89,6 @@ export default function GameDetail() {
                 <span>{game.game.genres.join(", ")}</span>
               </>
             )}
-            {game.game.playtime && (
-              <>
-                <span>•</span>
-                <span>~{game.game.playtime}h</span>
-              </>
-            )}
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <StatusMenu status={game.status} onChange={handleStatusChange} />
