@@ -1,34 +1,19 @@
 import { useEffect, useState } from "react";
-import {
-  STATUSES,
-  type GameDetails,
-  type Platform,
-  type SearchResult,
-  type Status,
-  type UserGame,
-} from "../types/Game";
-import { apiFetch } from "../api";
-import GameSearch from "../components/GameSearch";
-import GameCard from "../components/GameCard";
-import { useGameStore } from "../stores/gameStore";
-import bonfireImg from "../assets/bonfire.png";
-
-import { Button } from "@/components/ui/button";
-import Loading from "@/components/Loading";
 import { useQuery } from "@tanstack/react-query";
-import { sortGames } from "@/utils/status";
+import { apiFetch } from "../api";
+import GameCard from "../components/GameCard";
+import Loading from "@/components/Loading";
+import { sortGames, STATUS_ORDER } from "@/utils/status";
 import FilterSelect from "@/components/FilterSelect";
+import { type Status, type UserGame } from "../types/Game";
+import bonfireImg from "../assets/bonfire.png";
+import GameAddForm from "../components/GameAddForm";
 
 export default function Games() {
-  const add = useGameStore((s) => s.add);
-  const [selected, setSelected] = useState<SearchResult | null>(null);
-  const [details, setDetails] = useState<GameDetails | null>(null);
-  const [platform, setPlatform] = useState<Platform | null>(null);
-  const [status, setStatus] = useState<Status>("backlog");
-  const [searchKey, setSearchKey] = useState(0);
   const [filter, setFilter] = useState<Status | "all">("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const PER_PAGE = 24;
 
   const {
     data: games = [],
@@ -38,12 +23,6 @@ export default function Games() {
     queryKey: ["games"],
     queryFn: () => apiFetch<UserGame[]>("/api/games"),
   });
-
-  const PER_PAGE = 24;
-
-  const uniquePlatforms = Array.from(
-    new Set(games.map((g) => g.platform.name)),
-  ).sort();
 
   const filteredGames = games.filter((g) => {
     const matchesStatus = filter === "all" || g.status === filter;
@@ -64,56 +43,25 @@ export default function Games() {
     setPage(1);
   }, [games.length, filter, platformFilter]);
 
+  const uniqueStatuses = Array.from(new Set(games.map((g) => g.status))).sort(
+    (a, b) => STATUS_ORDER[a] - STATUS_ORDER[b],
+  );
   const statusOptions = [
     { label: "All Games", value: "all" },
-    ...STATUSES.map((s) => ({
+    ...uniqueStatuses.map((s) => ({
       label: s.charAt(0).toUpperCase() + s.slice(1),
       value: s,
     })),
   ];
 
+  const uniquePlatforms = Array.from(
+    new Set(games.map((g) => g.platform.name)),
+  ).sort();
+
   const platformOptions = [
     { label: "All Platforms", value: "all" },
     ...uniquePlatforms.map((p) => ({ label: p, value: p })),
   ];
-
-  async function handleSelect(result: SearchResult) {
-    setSelected(result);
-    setDetails(null);
-    setPlatform(null);
-    try {
-      const d = await apiFetch<GameDetails>(
-        `/api/games/details/${result.rawgId}`,
-      );
-      setDetails(d);
-      setPlatform(d.availablePlatforms[0] ?? null);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  function handleClearSelection() {
-    setSelected(null);
-    setDetails(null);
-    setPlatform(null);
-    setStatus("backlog");
-    setSearchKey((k) => k + 1);
-  }
-
-  async function handleAdd(e: React.SubmitEvent) {
-    e.preventDefault();
-    if (!selected || !platform) return;
-    const ok = await add({
-      rawgId: selected.rawgId,
-      platform: {
-        name: platform.name,
-        slug: platform.slug,
-        releasedAt: platform.releasedAt,
-      },
-      status,
-    });
-    if (ok) handleClearSelection();
-  }
 
   return (
     <div className="min-h-screen bg-bg">
@@ -131,83 +79,8 @@ export default function Games() {
             Track your games and take notes of your progress.
           </p>
         </div>
-        <form onSubmit={handleAdd} className="mb-8">
-          <GameSearch
-            key={searchKey}
-            onSelect={handleSelect}
-            selected={selected}
-            onClear={handleClearSelection}
-          />
 
-          {details && (
-            <>
-              <div className="mt-4 flex gap-4 rounded border border-border bg-surface p-4">
-                <img
-                  src={details.coverUrl}
-                  alt=""
-                  className="h-32 w-24 shrink-0 rounded object-cover"
-                />
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold text-ink">
-                    {details.title}
-                  </h3>
-                  {details.developers && details.developers.length > 0 && (
-                    <p className="mt-1 text-sm text-ink-muted">
-                      {details.developers.join(", ")}
-                    </p>
-                  )}
-                  <p className="mt-1 text-xs text-ink-muted">
-                    {details.releaseDate?.slice(0, 4)}
-                    {details.genres.length > 0 &&
-                      ` · ${details.genres.join(", ")}`}
-                  </p>
-                  {details.playtime && (
-                    <p className="mt-1 text-xs text-ink-dim">
-                      ~{details.playtime}h to beat
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <FilterSelect
-                  value={platform?.name ?? ""}
-                  onValueChange={(val) => {
-                    const p = details.availablePlatforms.find(
-                      (x) => x.name === val,
-                    );
-                    setPlatform(p ?? null);
-                  }}
-                  options={details.availablePlatforms.map((p) => ({
-                    label: p.name,
-                    value: p.name,
-                  }))}
-                  placeholder="Select platform"
-                  className=" min-w-0"
-                />
-
-                <FilterSelect
-                  value={status}
-                  onValueChange={(val) => setStatus(val as Status)}
-                  options={STATUSES.map((s) => ({
-                    label: s.charAt(0).toUpperCase() + s.slice(1),
-                    value: s,
-                  }))}
-                  placeholder="Select status"
-                  className="min-w-0"
-                />
-
-                <Button
-                  type="submit"
-                  disabled={!platform}
-                  className="rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Add
-                </Button>
-              </div>
-            </>
-          )}
-        </form>
+        <GameAddForm />
 
         {error && (
           <p className="mb-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
