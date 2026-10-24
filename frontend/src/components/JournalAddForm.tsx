@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import FileUpload from "./FileUpload";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   gameId: string;
@@ -46,6 +47,12 @@ export default function JournalAddForm({ gameId }: Props) {
       <textarea
         value={newEntry}
         onChange={(e) => setNewEntry(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            e.currentTarget.form?.requestSubmit();
+          }
+        }}
         placeholder="What happened today?"
         rows={3}
         className="w-full resize-none bg-transparent text-sm text-ink placeholder:text-ink-dim focus:outline-none"
@@ -61,13 +68,13 @@ export default function JournalAddForm({ gameId }: Props) {
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={submitting || (!newEntry.trim() && !imageFile)}
           className="shrink-0 rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
           {submitting ? "Saving…" : "Post"}
-        </button>
+        </Button>
       </div>
     </form>
   );
