@@ -4,6 +4,7 @@ import { useGameStore } from "../stores/gameStore";
 import GameSearch from "./GameSearch";
 import FilterSelect from "./FilterSelect";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   STATUSES,
   type GameDetails,
@@ -20,6 +21,7 @@ export default function GameAddForm() {
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [status, setStatus] = useState<Status>("backlog");
   const [searchKey, setSearchKey] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
 
   async function handleSelect(result: SearchResult) {
     setSelected(result);
@@ -47,16 +49,22 @@ export default function GameAddForm() {
   async function handleAdd(e: React.SubmitEvent) {
     e.preventDefault();
     if (!selected || !platform) return;
-    const ok = await add({
-      rawgId: selected.rawgId,
-      platform: {
-        name: platform.name,
-        slug: platform.slug,
-        releasedAt: platform.releasedAt,
-      },
-      status,
-    });
-    if (ok) handleClearSelection();
+
+    setIsAdding(true);
+    try {
+      const ok = await add({
+        rawgId: selected.rawgId,
+        platform: {
+          name: platform.name,
+          slug: platform.slug,
+          releasedAt: platform.releasedAt,
+        },
+        status,
+      });
+      if (ok) handleClearSelection();
+    } finally {
+      setIsAdding(false);
+    }
   }
 
   return (
@@ -89,11 +97,6 @@ export default function GameAddForm() {
                 {details.releaseDate?.slice(0, 4)}
                 {details.genres.length > 0 && ` · ${details.genres.join(", ")}`}
               </p>
-              {details.playtime && (
-                <p className="mt-1 text-xs text-ink-dim">
-                  ~{details.playtime}h to beat
-                </p>
-              )}
             </div>
           </div>
 
@@ -126,10 +129,17 @@ export default function GameAddForm() {
 
             <Button
               type="submit"
-              disabled={!platform}
-              className="rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!platform || isAdding}
+              className="flex min-w-20 items-center justify-center gap-2 rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Add
+              {isAdding ? (
+                <>
+                  <Spinner className="h-4 w-4 text-black" />
+                  Adding…
+                </>
+              ) : (
+                "Add"
+              )}
             </Button>
           </div>
         </>

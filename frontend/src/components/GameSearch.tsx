@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import { Spinner } from "@/components/ui/spinner";
 import type { SearchResult } from "../types/Game";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Props = {
   onSelect: (result: SearchResult) => void;
@@ -59,7 +60,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
   }
 
   return (
-    <div ref={wrapperRef} className="relative z-50">
+    <div ref={wrapperRef} className="relative z-30">
       <div className="relative flex gap-2">
         <input
           value={query}
@@ -96,33 +97,37 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
       </div>
 
       {open && results.length > 0 && (
-        <ul className="absolute mt-1 max-h-96 w-full overflow-auto rounded border border-border bg-surface shadow-lg">
-          {results.map((r) => (
-            <li
-              key={r.rawgId}
-              onClick={() => handlePick(r)}
-              className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
-            >
-              {r.coverUrl && (
-                <img
-                  src={r.coverUrl}
-                  alt=""
-                  className="h-16 w-12 shrink-0 rounded object-cover"
-                />
-              )}
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-ink group-hover:text-brand">
-                  {r.title}
-                </div>
-                {r.released && (
-                  <div className="text-xs text-ink-muted">
-                    {r.released.slice(0, 4)}
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded border border-border bg-surface shadow-lg">
+          <ScrollArea className="h-100">
+            <ul>
+              {results.map((r) => (
+                <li
+                  key={r.rawgId}
+                  onClick={() => handlePick(r)}
+                  className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
+                >
+                  {r.coverUrl && (
+                    <img
+                      src={r.coverUrl}
+                      alt=""
+                      className="h-16 w-12 shrink-0 rounded object-cover"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-ink group-hover:text-brand">
+                      {r.title}
+                    </div>
+                    {r.released && (
+                      <div className="text-xs text-ink-muted">
+                        {r.released.slice(0, 4)}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                </li>
+              ))}
+            </ul>
+          </ScrollArea>
+        </div>
       )}
     </div>
   );
