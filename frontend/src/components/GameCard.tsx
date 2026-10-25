@@ -22,60 +22,62 @@ export default function GameCard({ game }: Props) {
 
   return (
     <li className="group">
-      <div className="relative aspect-3/4 w-full overflow-hidden rounded">
-        <Link to={`/games/${game._id}`} className="block h-full w-full">
-          <GameCover game={game} />
-        </Link>
+      <div className="transition-all duration-200 ease-out group-hover:-translate-y-1">
+        <div className="relative aspect-3/4 w-full overflow-hidden rounded group-hover:shadow-lg group-hover:shadow-black/50">
+          <Link to={`/games/${game._id}`} className="block h-full w-full">
+            <GameCover game={game} />
+          </Link>
 
-        {confirmDelete ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 p-3 text-center">
-            <p className="text-xs font-medium text-ink">Delete ?</p>
-            <div className="flex gap-2">
+          {confirmDelete ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 p-3 text-center">
+              <p className="text-xs font-medium text-ink">Delete ?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConfirmDelete}
+                  className="cursor-pointer rounded bg-destructive px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-red-600"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="cursor-pointer rounded border border-border bg-surface px-2.5 py-1 text-xs font-medium text-ink-muted transition-colors hover:border-ink-muted hover:text-ink"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="absolute left-1 top-1 z-10">
+                <PlatformBadge platform={game.platform} size="sm" />
+              </div>
+              <div className="absolute bottom-1 left-1 z-10">
+                <StatusMenu
+                  status={game.status}
+                  onChange={async (s) => {
+                    await updateStatus(game._id, s);
+                  }}
+                  direction="up"
+                  size="sm"
+                />
+              </div>
+
               <button
-                onClick={handleConfirmDelete}
-                className="cursor-pointer rounded bg-destructive px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-red-600"
+                onClick={() => setConfirmDelete(true)}
+                className="absolute right-1 top-1 cursor-pointer rounded bg-black/70 px-1.5 py-0.5 text-xs text-ink opacity-0 transition-opacity group-hover:opacity-100"
               >
-                Yes
+                ×
               </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="cursor-pointer rounded border border-border bg-surface px-2.5 py-1 text-xs font-medium text-ink-muted transition-colors hover:border-ink-muted hover:text-ink"
-              >
-                No
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="absolute left-1 top-1 z-10">
-              <PlatformBadge platform={game.platform} size="sm" />
-            </div>
-            <div className="absolute bottom-1 left-1">
-              <StatusMenu
-                status={game.status}
-                onChange={async (s) => {
-                  await updateStatus(game._id, s);
-                }}
-                direction="up"
-                size="sm"
-              />
-            </div>
-
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="absolute right-1 top-1 cursor-pointer rounded bg-black/70 px-1.5 py-0.5 text-xs text-ink opacity-0 transition-opacity group-hover:opacity-100"
-            >
-              ×
-            </button>
-          </>
-        )}
-      </div>
-
-      <Link to={`/games/${game._id}`} className="mt-1 block">
-        <div className="truncate text-xs font-medium text-ink-muted">
-          {game.game.title}
+            </>
+          )}
         </div>
-      </Link>
+
+        <Link to={`/games/${game._id}`} className="mt-1 block">
+          <div className="truncate text-xs font-medium text-ink-muted">
+            {game.game.title}
+          </div>
+        </Link>
+      </div>
     </li>
   );
 }
