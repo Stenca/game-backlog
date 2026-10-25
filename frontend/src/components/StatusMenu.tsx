@@ -44,7 +44,7 @@ export default function StatusMenu({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`cursor-pointer rounded font-medium uppercase tracking-wide text-black transition-colors ${buttonSize} ${getStatusColor(status)}`}
+        className={`cursor-pointer rounded font-medium uppercase tracking-wide text-black transition-opacity hover:opacity-60 ${buttonSize} ${getStatusColor(status)}`}
       >
         {status}
       </button>

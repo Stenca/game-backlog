@@ -11,13 +11,22 @@ type AddGamePayload = {
   notes?: string;
 };
 
+type UpdateGamePayload = {
+  status?: Status;
+  rating?: number;
+  review?: string;
+  notes?: string;
+  platform?: { name: string; slug?: string; releasedAt?: string };
+};
+
 type GameStore = {
   add: (payload: AddGamePayload) => Promise<boolean>;
+  updateGame: (id: string, payload: UpdateGamePayload) => Promise<boolean>;
   updateStatus: (id: string, status: Status) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
 };
 
-export const useGameStore = create<GameStore>(() => ({
+export const useGameStore = create<GameStore>((_, get) => ({
   add: async (payload) => {
     try {
       const created = await apiFetch<UserGame>("/api/games", {
@@ -37,11 +46,11 @@ export const useGameStore = create<GameStore>(() => ({
     }
   },
 
-  updateStatus: async (id, status) => {
+  updateGame: async (id, payload) => {
     try {
       const updated = await apiFetch<UserGame>(`/api/games/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
       });
 
       queryClient.setQueryData<UserGame[]>(["games"], (old = []) =>
@@ -52,9 +61,13 @@ export const useGameStore = create<GameStore>(() => ({
 
       return true;
     } catch (err) {
-      console.error("[gameStore/updateStatus]", err);
+      console.error("[gameStore/updateGame]", err);
       return false;
     }
+  },
+
+  updateStatus: async (id, status) => {
+    return get().updateGame(id, { status });
   },
 
   remove: async (id) => {

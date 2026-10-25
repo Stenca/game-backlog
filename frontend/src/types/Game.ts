@@ -32,6 +32,7 @@ export type UserGame = {
   status: Status;
   platform: Platform;
   rating?: number;
+  review?: string;
   notes?: string;
   game: GameCatalog;
   createdAt: string;

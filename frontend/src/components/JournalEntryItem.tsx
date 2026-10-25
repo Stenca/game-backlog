@@ -63,7 +63,7 @@ export default function JournalEntryItem({ entry }: Props) {
   }
 
   return (
-    <li className="group relative rounded-xl border border-border bg-surface p-4 transition-colors hover:border-brand">
+    <li className="group relative rounded border border-border bg-surface p-4 transition-colors hover:border-brand">
       {isEditing ? (
         <form onSubmit={handleSave} className="flex flex-col gap-3">
           <textarea
@@ -140,7 +140,7 @@ export default function JournalEntryItem({ entry }: Props) {
           )}
 
           {entry.imageUrl && (
-            <div className="mt-3 overflow-hidden rounded-lg border border-border/50 bg-surface-2">
+            <div className="mt-3 overflow-hidden rounded border border-border/50 bg-surface-2">
               <img
                 src={entry.imageUrl}
                 alt="Journal attachment"

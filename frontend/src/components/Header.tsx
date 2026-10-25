@@ -37,7 +37,7 @@ export default function Header() {
                 Welcome back,{" "}
                 <Link
                   to="/profile"
-                  className="font-medium text-brand transition-colors hover:text-brand-hover hover:underline"
+                  className="font-medium text-brand transition-colors hover:text-brand/60 "
                 >
                   {user.displayName || user.username}
                 </Link>

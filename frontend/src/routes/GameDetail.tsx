@@ -1,4 +1,6 @@
 import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
@@ -7,11 +9,19 @@ import StatusMenu from "../components/StatusMenu";
 import PlatformBadge from "../components/PlatformBadge";
 import Journal from "../components/Journal";
 import Loading from "@/components/Loading";
-import { useQuery } from "@tanstack/react-query";
+import StarRating from "@/components/StarRating";
+import { Button } from "@/components/ui/button";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
   const updateStatus = useGameStore((s) => s.updateStatus);
+  const updateGame = useGameStore((s) => s.updateGame);
+
+  const [rating, setRating] = useState(0);
+  const [review, setReview] = useState("");
+  const [savingReview, setSavingReview] = useState(false);
+
+  const [isEditing, setIsEditing] = useState(false);
 
   const {
     data: game,
@@ -23,9 +33,41 @@ export default function GameDetail() {
     enabled: !!id,
   });
 
+  useEffect(() => {
+    if (game) {
+      setRating(game.rating ?? 0);
+      setReview(game.review ?? "");
+      setIsEditing(!game.review);
+    }
+  }, [game]);
+
   async function handleStatusChange(newStatus: Status) {
     if (!game) return;
     await updateStatus(game._id, newStatus);
+  }
+
+  async function handleRatingChange(newRating: number) {
+    if (!game) return;
+    const previousRating = rating;
+    setRating(newRating);
+    const ok = await updateGame(game._id, { rating: newRating });
+    if (!ok) setRating(previousRating);
+  }
+
+  async function handleSaveReview() {
+    if (!game) return;
+    setSavingReview(true);
+    try {
+      await updateGame(game._id, { review });
+      setIsEditing(false);
+    } finally {
+      setSavingReview(false);
+    }
+  }
+
+  function handleCancelEdit() {
+    setReview(game?.review ?? "");
+    setIsEditing(false);
   }
 
   if (isLoading) {
@@ -52,6 +94,8 @@ export default function GameDetail() {
 
   if (!game) return null;
 
+  const hasReviewChanges = review !== (game.review ?? "");
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-8">
       <Link
@@ -61,24 +105,27 @@ export default function GameDetail() {
         ← Back to games
       </Link>
 
-      <div className="mt-6 flex flex-col gap-6 md:flex-row">
+      <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-start">
         <div className="w-full shrink-0 md:w-56">
           <GameCover game={game} showStatus={false} />
         </div>
+
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight text-ink">
+          <h1 className="mt-0 text-3xl leading-none font-bold tracking-tight text-ink">
             {game.game.title}
           </h1>
+
           <div className="mt-1 text-sm text-ink-muted">
             {game.game.developers && game.game.developers.length > 0 && (
               <p>
-                <span className="text-ink">by </span>{" "}
+                <span className="text-ink">by </span>
                 <span className="text-ink">
                   {game.game.developers.join(", ")}
                 </span>
               </p>
             )}
           </div>
+
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
             {game.game.releaseDate && (
               <span>{game.game.releaseDate.slice(0, 4)}</span>
@@ -90,9 +137,66 @@ export default function GameDetail() {
               </>
             )}
           </div>
+
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <StatusMenu status={game.status} onChange={handleStatusChange} />
             <PlatformBadge platform={game.platform} size="md" />
+          </div>
+
+          <div className="mt-6 border-t border-border pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-ink">
+                Your rating and review
+              </h2>
+              {game.review && !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="cursor-pointer text-xs text-brand hover:text-brand/60"
+                >
+                  Edit Review
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-4">
+              <StarRating value={rating} onChange={handleRatingChange} />
+              <span className="text-sm text-ink-muted">
+                {rating > 0 ? `${rating}/5` : "Not rated"}
+              </span>
+            </div>
+
+            <textarea
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              onClick={() => {
+                if (!isEditing) setIsEditing(true);
+              }}
+              placeholder="What did you think of this game?"
+              readOnly={!isEditing}
+              className={`mt-3 block h-32 w-full resize-none rounded border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-dim hover:border-brand focus:border-brand focus:outline-none ${
+                isEditing ? "" : "cursor-pointer"
+              }`}
+            />
+            {isEditing && (
+              <div className="mt-1.5 flex justify-end gap-2">
+                {game.review && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    className="cursor-pointer border-border text-ink hover:text-brand"
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSaveReview}
+                  disabled={!hasReviewChanges || savingReview}
+                  className="cursor-pointer rounded bg-brand px-4 py-1.5 text-sm font-medium text-bg transition-colors hover:bg-brand-hover  disabled:opacity-40"
+                >
+                  {savingReview ? "Saving..." : "Save Review"}
+                </Button>
+              </div>
+            )}
           </div>
 
           {error && (

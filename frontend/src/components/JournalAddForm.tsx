@@ -42,7 +42,7 @@ export default function JournalAddForm({ gameId }: Props) {
   return (
     <form
       onSubmit={handleAdd}
-      className="rounded-xl border border-border bg-surface p-4 shadow-sm transition-colors focus-within:border-brand hover:border-brand"
+      className="rounded border border-border bg-surface p-4 shadow-sm transition-colors focus-within:border-brand hover:border-brand"
     >
       <textarea
         value={newEntry}

@@ -18,7 +18,8 @@ export const createGameSchema = z.object({
   rawgId: z.number().int().positive(),
   platform: platformInputSchema,
   status: statusEnum.default("backlog"),
-  rating: z.number().int().min(1).max(10).optional(),
+  rating: z.number().int().min(0).max(5).optional(),
+  review: z.string().max(5000).optional(),
   notes: z.string().max(2000).optional(),
 });
 
@@ -26,7 +27,8 @@ export const updateGameSchema = z
   .object({
     platform: platformInputSchema.optional(),
     status: statusEnum.optional(),
-    rating: z.number().int().min(1).max(10).optional(),
+    rating: z.number().int().min(0).max(5).optional(),
+    review: z.string().max(5000).optional(),
     notes: z.string().max(2000).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

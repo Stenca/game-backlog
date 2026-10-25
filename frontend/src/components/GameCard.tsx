@@ -47,7 +47,7 @@ export default function GameCard({ game }: Props) {
           </div>
         ) : (
           <>
-            <div className="pointer-events-none absolute left-1 top-1 z-10">
+            <div className="absolute left-1 top-1 z-10">
               <PlatformBadge platform={game.platform} size="sm" />
             </div>
             <div className="absolute bottom-1 left-1">
