@@ -20,9 +20,7 @@ export default function GameDetail() {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [savingReview, setSavingReview] = useState(false);
-
   const [isEditing, setIsEditing] = useState(false);
-
   const {
     data: game,
     isLoading,
@@ -59,6 +57,18 @@ export default function GameDetail() {
     setSavingReview(true);
     try {
       await updateGame(game._id, { review });
+      setIsEditing(false);
+    } finally {
+      setSavingReview(false);
+    }
+  }
+
+  async function handleDeleteReview() {
+    if (!game) return;
+    setSavingReview(true);
+    try {
+      await updateGame(game._id, { review: "" });
+      setReview("");
       setIsEditing(false);
     } finally {
       setSavingReview(false);
@@ -144,63 +154,80 @@ export default function GameDetail() {
           </div>
 
           <div className="mt-6 border-t border-border pt-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-ink">
-                Your rating and review
-              </h2>
+            <h2 className="mb-3 text-base font-semibold text-ink">
+              Your rating and review
+            </h2>
+
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <StarRating value={rating} onChange={handleRatingChange} />
+                <span className="text-sm text-ink-muted">
+                  {rating > 0 ? `${rating}/5` : "Not rated"}
+                </span>
+              </div>
+
               {game.review && !isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="cursor-pointer text-xs text-brand hover:text-brand/60"
-                >
-                  Edit Review
-                </button>
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="cursor-pointer text-xs font-medium text-brand transition-colors hover:text-brand-hover"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDeleteReview}
+                    className="cursor-pointer text-xs font-medium text-destructive transition-colors hover:text-red-600"
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
             </div>
 
-            <div className="flex items-center gap-4">
-              <StarRating value={rating} onChange={handleRatingChange} />
-              <span className="text-sm text-ink-muted">
-                {rating > 0 ? `${rating}/5` : "Not rated"}
-              </span>
-            </div>
+            <div className="relative">
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                onClick={() => {
+                  if (!isEditing) setIsEditing(true);
+                }}
+                placeholder="What did you think of this game?"
+                readOnly={!isEditing}
+                className={`block h-32 w-full resize-none rounded border px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:outline-none ${
+                  isEditing
+                    ? "border-border bg-surface focus:border-brand"
+                    : "cursor-pointer border-transparent bg-surface-2/50 hover:border-border/50 focus:border-transparent focus:ring-0"
+                }`}
+              />
 
-            <textarea
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              onClick={() => {
-                if (!isEditing) setIsEditing(true);
-              }}
-              placeholder="What did you think of this game?"
-              readOnly={!isEditing}
-              className={`mt-3 block h-32 w-full resize-none rounded border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-dim hover:border-brand focus:border-brand focus:outline-none ${
-                isEditing ? "" : "cursor-pointer"
-              }`}
-            />
-            {isEditing && (
-              <div className="mt-1.5 flex justify-end gap-2">
-                {game.review && (
+              {isEditing && (
+                <div className="absolute right-2 bottom-2 flex gap-2">
+                  {game.review && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setReview(game.review ?? "");
+                        setIsEditing(false);
+                      }}
+                      className="cursor-pointer border-border bg-surface/80 text-ink hover:text-brand"
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
-                    onClick={handleCancelEdit}
-                    className="cursor-pointer border-border text-ink hover:text-brand"
+                    onClick={handleSaveReview}
+                    disabled={!hasReviewChanges || savingReview}
+                    className="cursor-pointer rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Cancel
+                    {savingReview ? "Saving..." : "Save Review"}
                   </Button>
-                )}
-                <Button
-                  onClick={handleSaveReview}
-                  disabled={!hasReviewChanges || savingReview}
-                  className="cursor-pointer rounded bg-brand px-4 py-1.5 text-sm font-medium text-bg transition-colors hover:bg-brand-hover  disabled:opacity-40"
-                >
-                  {savingReview ? "Saving..." : "Save Review"}
-                </Button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
 
           {error && (
-            <p className="mt-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-400">
+            <p className="mt-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
               {error.message}
             </p>
           )}
