@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import GameCover from "./GameCover";
 import StatusMenu from "./StatusMenu";
 import PlatformBadge from "./PlatformBadge";
+import DeleteConfirmOverlay from "@/components/ConfirmDeleteOverlay";
 
 type Props = {
   game: UserGame;
@@ -15,9 +16,14 @@ export default function GameCard({ game }: Props) {
   const updateStatus = useGameStore((s) => s.updateStatus);
   const remove = useGameStore((s) => s.remove);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleConfirmDelete() {
-    await remove(game._id);
+    setIsDeleting(true);
+    const ok = await remove(game._id);
+    if (!ok) {
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -29,23 +35,11 @@ export default function GameCard({ game }: Props) {
           </Link>
 
           {confirmDelete ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 p-3 text-center">
-              <p className="text-xs font-medium text-ink">Delete ?</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleConfirmDelete}
-                  className="cursor-pointer rounded bg-destructive px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-red-600"
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="cursor-pointer rounded border border-border bg-surface px-2.5 py-1 text-xs font-medium text-ink-muted transition-colors hover:border-ink-muted hover:text-ink"
-                >
-                  No
-                </button>
-              </div>
-            </div>
+            <DeleteConfirmOverlay
+              onConfirm={handleConfirmDelete}
+              onCancel={() => setConfirmDelete(false)}
+              isDeleting={isDeleting}
+            />
           ) : (
             <>
               <div className="absolute left-1 top-1 z-10">
