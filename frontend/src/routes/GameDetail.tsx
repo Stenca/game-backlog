@@ -11,6 +11,7 @@ import Journal from "../components/Journal";
 import Loading from "@/components/Loading";
 import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
+import GameTimeline from "@/components/GameTimeline";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ export default function GameDetail() {
   const [review, setReview] = useState("");
   const [savingReview, setSavingReview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
   const {
     data: game,
     isLoading,
@@ -75,11 +77,6 @@ export default function GameDetail() {
     }
   }
 
-  function handleCancelEdit() {
-    setReview(game?.review ?? "");
-    setIsEditing(false);
-  }
-
   if (isLoading) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
@@ -115,12 +112,15 @@ export default function GameDetail() {
         ← Back to games
       </Link>
 
-      <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-start">
-        <div className="w-full shrink-0 md:w-56">
+      <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[224px_1fr]">
+        <div className="flex flex-col gap-4">
           <GameCover game={game} showStatus={false} />
+          <div className="flex flex-1 flex-col justify-end rounded bg-surface p-3">
+            <GameTimeline game={game} />
+          </div>
         </div>
 
-        <div className="flex-1">
+        <div className="flex flex-col">
           <h1 className="mt-0 text-3xl leading-none font-bold tracking-tight text-ink">
             {game.game.title}
           </h1>
@@ -153,7 +153,8 @@ export default function GameDetail() {
             <PlatformBadge platform={game.platform} size="md" />
           </div>
 
-          <div className="mt-6 border-t border-border pt-4">
+          {/* Review Section */}
+          <div className="mt-6 flex flex-1 flex-col border-t border-border pt-4">
             <h2 className="mb-3 text-base font-semibold text-ink">
               Your rating and review
             </h2>
@@ -184,19 +185,27 @@ export default function GameDetail() {
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative flex flex-1 flex-col">
               <textarea
                 value={review}
                 onChange={(e) => setReview(e.target.value)}
                 onClick={() => {
                   if (!isEditing) setIsEditing(true);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && isEditing) {
+                    if (hasReviewChanges) {
+                      e.preventDefault();
+                      handleSaveReview();
+                    }
+                  }
+                }}
                 placeholder="What did you think of this game?"
                 readOnly={!isEditing}
-                className={`block h-32 w-full resize-none rounded border px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:outline-none ${
+                className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 text-sm placeholder:text-ink-dim focus:outline-none ${
                   isEditing
                     ? "border-border bg-surface focus:border-brand"
-                    : "cursor-pointer border-transparent bg-surface-2/50 hover:border-border/50 focus:border-transparent focus:ring-0"
+                    : "cursor-pointer border-transparent bg-surface-2/50 hover:border-border/50 focus:border-transparent focus:ring-0 text-ink-muted"
                 }`}
               />
 
