@@ -3,8 +3,10 @@ import { useJournalStore } from "../stores/journalStore";
 import type { JournalEntry } from "../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import FileUpload from "./FileUpload";
-import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import AttachmentPreview from "@/components/AttachmentPreview";
+import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   entry: JournalEntry;
@@ -13,6 +15,7 @@ type Props = {
 export default function JournalEntryItem({ entry }: Props) {
   const [editBody, setEditBody] = useState(entry.body || "");
   const [editImage, setEditImage] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
   const [removeImage, setRemoveImage] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState("");
@@ -59,9 +62,8 @@ export default function JournalEntryItem({ entry }: Props) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isEditing, confirmOpen, entry.body]);
 
-  async function handleSave(e: React.SubmitEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-
     const hasBody = !!editBody.trim();
     const hasNewImage = !!editImage;
     const hasExistingImage = !!entry.imageUrl && !removeImage;
@@ -71,13 +73,19 @@ export default function JournalEntryItem({ entry }: Props) {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("body", editBody);
-    if (removeImage) formData.append("removeImage", "true");
-    if (editImage) formData.append("image", editImage);
+    setSaving(true);
 
-    const ok = await updateEntry(entry._id, entry.gameId, formData);
-    if (!ok) setError("Failed to update entry");
+    try {
+      const formData = new FormData();
+      formData.append("body", editBody);
+      if (removeImage) formData.append("removeImage", "true");
+      if (editImage) formData.append("image", editImage);
+
+      const ok = await updateEntry(entry._id, entry.gameId, formData);
+      if (!ok) setError("Failed to update entry");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleConfirmDelete() {
@@ -121,17 +129,24 @@ export default function JournalEntryItem({ entry }: Props) {
           <div className="flex justify-end gap-3 border-t border-border/50 pt-3">
             <button
               type="button"
-              onClick={() => setEditingId(null)}
+              onClick={cancelEdit}
               className="cursor-pointer text-xs font-medium text-ink-muted transition-colors hover:text-brand"
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
               className="cursor-pointer rounded bg-brand px-4 py-1.5 text-xs font-medium text-black transition-colors hover:bg-brand-hover"
             >
-              Save changes
-            </button>
+              {saving ? (
+                <>
+                  <Spinner className="h-4 w-4 text-black" />
+                  Saving...
+                </>
+              ) : (
+                "Save changes"
+              )}
+            </Button>
           </div>
         </form>
       ) : (
@@ -179,13 +194,12 @@ export default function JournalEntryItem({ entry }: Props) {
         </>
       )}
 
-      <ConfirmDeleteDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        onConfirm={handleConfirmDelete}
-        title="Delete entry ?"
-        description="Are you sure you want to permanently delete this journal entry ?"
-      />
+      {confirmOpen && (
+        <DeleteConfirmOverlay
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      )}
     </li>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import FileUpload from "./FileUpload";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   gameId: string;
@@ -73,7 +74,14 @@ export default function JournalAddForm({ gameId }: Props) {
           disabled={submitting || (!newEntry.trim() && !imageFile)}
           className="shrink-0 rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {submitting ? "Saving…" : "Post"}
+          {submitting ? (
+            <>
+              <Spinner className="h-4 w-4 text-black" />
+              Posting...
+            </>
+          ) : (
+            "Post"
+          )}
         </Button>
       </div>
     </form>
