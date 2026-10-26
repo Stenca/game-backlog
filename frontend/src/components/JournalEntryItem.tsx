@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import type { JournalEntry } from "../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
@@ -31,6 +31,33 @@ export default function JournalEntryItem({ entry }: Props) {
     setError("");
     setEditingId(entry._id);
   }
+
+  function cancelEdit() {
+    setEditBody(entry.body || "");
+    setEditImage(null);
+    setRemoveImage(false);
+    setError("");
+    setEditingId(null);
+  }
+
+  useEffect(() => {
+    if (!isEditing && !confirmOpen) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+
+      if (confirmOpen) {
+        e.preventDefault();
+        setConfirmOpen(false);
+      } else if (isEditing) {
+        e.preventDefault();
+        cancelEdit();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isEditing, confirmOpen, entry.body]);
 
   async function handleSave(e: React.SubmitEvent) {
     e.preventDefault();

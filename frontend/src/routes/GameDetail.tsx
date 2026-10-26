@@ -12,6 +12,7 @@ import Loading from "@/components/Loading";
 import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/GameTimeline";
+import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ export default function GameDetail() {
   const [review, setReview] = useState("");
   const [savingReview, setSavingReview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const {
     data: game,
@@ -40,6 +42,24 @@ export default function GameDetail() {
       setIsEditing(!game.review);
     }
   }, [game]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+
+      if (confirmingDelete) {
+        e.preventDefault();
+        setConfirmingDelete(false);
+      } else if (isEditing) {
+        e.preventDefault();
+        setReview(game?.review ?? "");
+        setIsEditing(false);
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [confirmingDelete, isEditing, game?.review]);
 
   async function handleStatusChange(newStatus: Status) {
     if (!game) return;
@@ -72,6 +92,7 @@ export default function GameDetail() {
       await updateGame(game._id, { review: "" });
       setReview("");
       setIsEditing(false);
+      setConfirmingDelete(false);
     } finally {
       setSavingReview(false);
     }
@@ -153,7 +174,6 @@ export default function GameDetail() {
             <PlatformBadge platform={game.platform} size="md" />
           </div>
 
-          {/* Review Section */}
           <div className="mt-6 flex flex-1 flex-col border-t border-border pt-4">
             <h2 className="mb-3 text-base font-semibold text-ink">
               Your rating and review
@@ -176,7 +196,7 @@ export default function GameDetail() {
                     Edit
                   </button>
                   <button
-                    onClick={handleDeleteReview}
+                    onClick={() => setConfirmingDelete(true)}
                     className="cursor-pointer text-xs font-medium text-destructive transition-colors hover:text-red-600"
                   >
                     Delete
@@ -199,9 +219,10 @@ export default function GameDetail() {
                       handleSaveReview();
                     }
                   }
+                  setConfirmingDelete(false);
                 }}
                 placeholder="What did you think of this game?"
-                readOnly={!isEditing}
+                readOnly={!isEditing || confirmingDelete}
                 className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 text-sm placeholder:text-ink-dim focus:outline-none ${
                   isEditing
                     ? "border-border bg-surface focus:border-brand"
@@ -209,7 +230,15 @@ export default function GameDetail() {
                 }`}
               />
 
-              {isEditing && (
+              {confirmingDelete && (
+                <DeleteConfirmOverlay
+                  onConfirm={handleDeleteReview}
+                  onCancel={() => setConfirmingDelete(false)}
+                  isDeleting={savingReview}
+                />
+              )}
+
+              {isEditing && !confirmingDelete && (
                 <div className="absolute right-2 bottom-2 flex gap-2">
                   {game.review && (
                     <Button

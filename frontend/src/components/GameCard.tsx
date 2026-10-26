@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import GameCover from "./GameCover";
 import StatusMenu from "./StatusMenu";
 import PlatformBadge from "./PlatformBadge";
-import DeleteConfirmOverlay from "@/components/ConfirmDeleteOverlay";
+import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
 
 type Props = {
   game: UserGame;
