@@ -8,10 +8,12 @@ import FilterSelect from "@/components/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
 import bonfireImg from "../assets/bonfire.png";
 import GameAddForm from "../components/GameAddForm";
+import { SearchBar } from "../components/SearchBar"; // Adjust path if needed
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const PER_PAGE = 24;
 
@@ -28,7 +30,11 @@ export default function Games() {
     const matchesStatus = filter === "all" || g.status === filter;
     const matchesPlatform =
       platformFilter === "all" || g.platform.name === platformFilter;
-    return matchesStatus && matchesPlatform;
+    const matchesSearch = g.game.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    return matchesStatus && matchesPlatform && matchesSearch;
   });
 
   const sortedGames = sortGames(filteredGames);
@@ -41,7 +47,7 @@ export default function Games() {
 
   useEffect(() => {
     setPage(1);
-  }, [games.length, filter, platformFilter]);
+  }, [games.length, filter, platformFilter, searchQuery]);
 
   const uniqueStatuses = Array.from(new Set(games.map((g) => g.status))).sort(
     (a, b) => STATUS_ORDER[a] - STATUS_ORDER[b],
@@ -92,7 +98,17 @@ export default function Games() {
           <Loading text="Loading your library" />
         ) : (
           <>
-            <div className="mb-6 flex flex-wrap gap-2 border-b border-border pb-4">
+            <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-border pb-4">
+              <div className="w-full sm:w-64">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Search your library..."
+                  showClear={searchQuery.length > 0}
+                  onClear={() => setSearchQuery("")}
+                />
+              </div>
+
               <FilterSelect
                 value={filter}
                 onValueChange={(val) => setFilter(val as Status | "all")}
@@ -111,14 +127,12 @@ export default function Games() {
             {filteredGames.length === 0 ? (
               <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
                 <p className="text-base text-ink">
-                  {games.length === 0
-                    ? "No games yet."
-                    : `No games marked as ${filter}.`}
+                  {games.length === 0 ? "No games yet." : "No games found."}
                 </p>
                 <p className="mt-1 text-sm text-ink-muted">
                   {games.length === 0
                     ? "Search above to add your first one."
-                    : "Try changing the filter or adding a new game."}
+                    : "Try changing your filters or search query."}
                 </p>
               </div>
             ) : (

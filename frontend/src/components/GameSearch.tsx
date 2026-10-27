@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
-import { Spinner } from "@/components/ui/spinner";
 import type { SearchResult } from "../types/Game";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchBar } from "./SearchBar";
 
 type Props = {
   onSelect: (result: SearchResult) => void;
@@ -61,40 +61,23 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
 
   return (
     <div ref={wrapperRef} className="relative z-30">
-      <div className="relative flex gap-2">
-        <input
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
+      <SearchBar
+        value={query}
+        onChange={(value) => {
+          setQuery(value);
+          setOpen(true);
+          if (selected) onClear();
+        }}
+        onFocus={() => {
+          if (!selected && results.length > 0) {
             setOpen(true);
-            if (selected) onClear();
-          }}
-          onFocus={() => {
-            if (!selected && results.length > 0) {
-              setOpen(true);
-            }
-          }}
-          placeholder="Search a game to add..."
-          disabled={!!selected}
-          className="w-full rounded border border-border bg-surface-2/60 px-3 py-2 pr-10 text-sm text-ink placeholder:text-ink-dim transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
-        />
-
-        {isFetching && !selected && (
-          <div className="absolute top-2.5 right-3">
-            <Spinner className="h-4 w-4 text-ink-muted" />
-          </div>
-        )}
-
-        {selected && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="rounded border border-border px-3 text-sm text-ink-muted transition-colors hover:border-ink-muted hover:text-ink"
-          >
-            ×
-          </button>
-        )}
-      </div>
+          }
+        }}
+        placeholder="Search a game to add..."
+        isFetching={isFetching}
+        selected={!!selected}
+        onClear={handleClear}
+      />
 
       {open && results.length > 0 && (
         <div className="absolute z-50 mt-1 w-full overflow-hidden rounded border border-border bg-surface shadow-lg">
@@ -104,7 +87,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
                 <li
                   key={r.rawgId}
                   onClick={() => handlePick(r)}
-                  className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
+                  className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface"
                 >
                   {r.coverUrl && (
                     <img

@@ -4,6 +4,7 @@ import { apiFetch } from "../api";
 import { useAuthStore, type User } from "../stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import StatusMessage from "@/components/StatusMessage";
 
 export default function Profile() {
   const user = useAuthStore((s) => s.user);
@@ -144,16 +145,8 @@ export default function Profile() {
 
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="min-h-9 min-w-0 flex-1">
-              {profileError && (
-                <p className="rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-red-400">
-                  {profileError}
-                </p>
-              )}
-              {profileSuccess && (
-                <p className="rounded border border-green-900 bg-green-950/40 px-3 py-2 text-sm text-green-400">
-                  {profileSuccess}
-                </p>
-              )}
+              <StatusMessage message={profileError} variant="error" />
+              <StatusMessage message={profileSuccess} variant="success" />
             </div>
 
             <Button
@@ -231,16 +224,8 @@ export default function Profile() {
 
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="min-h-9 min-w-0 flex-1">
-              {passwordError && (
-                <p className="rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
-                  {passwordError}
-                </p>
-              )}
-              {passwordSuccess && (
-                <p className="rounded border border-green-900 bg-green-950/40 px-3 py-2 text-sm text-green-400">
-                  {passwordSuccess}
-                </p>
-              )}
+              <StatusMessage message={passwordError} variant="error" />
+              <StatusMessage message={passwordSuccess} variant="success" />
             </div>
 
             <Button
