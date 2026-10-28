@@ -75,7 +75,6 @@ export default function JournalEntryItem({ entry }: Props) {
     }
 
     setSaving(true);
-
     try {
       const formData = new FormData();
       formData.append("body", editBody);
@@ -183,14 +182,18 @@ export default function JournalEntryItem({ entry }: Props) {
           )}
 
           {entry.imageUrl && (
-            <div className="mt-3 overflow-hidden rounded border border-border/50 bg-surface-2">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 overflow-hidden rounded border border-border/50 bg-surface-2"
+            >
               <img
                 src={entry.imageUrl}
                 alt="Journal attachment"
-                className="max-h-125 w-full object-contain"
+                className="max-h-125 w-full object-contain transition-transform duration-500 hover:scale-105"
                 loading="lazy"
               />
-            </div>
+            </motion.div>
           )}
         </>
       )}

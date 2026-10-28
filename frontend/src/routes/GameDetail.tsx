@@ -126,7 +126,10 @@ export default function GameDetail() {
   const hasReviewChanges = review !== (game.review ?? "");
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-8">
+    <main className="relative mx-auto max-w-5xl px-6 py-8">
+      <div className="pointer-events-none absolute -top-10 -left-10 -z-10 h-125 w-125 rounded-full bg-brand/10 blur-[120px]" />
+      <div className="pointer-events-none absolute top-1/3 -right-20 -z-10 h-100 w-100 rounded-full bg-brand/5 blur-[100px]" />
+
       <Link
         to="/games"
         className="inline-block text-sm text-brand transition-colors hover:text-brand-hover"
@@ -137,6 +140,7 @@ export default function GameDetail() {
       <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[224px_1fr]">
         <div className="flex flex-col gap-4">
           <GameCover game={game} showStatus={false} />
+
           <div className="flex flex-1 flex-col justify-end rounded bg-surface p-3">
             <GameTimeline game={game} />
           </div>
@@ -231,10 +235,10 @@ export default function GameDetail() {
                 }}
                 placeholder="What did you think of this game?"
                 readOnly={!isEditing || confirmingDelete}
-                className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 text-sm placeholder:text-ink-dim focus:outline-none ${
+                className={`block min-h-40 w-full flex-1 resize-none rounded border px-4 py-3 pb-12 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
                   isEditing
-                    ? "border-border bg-surface focus:border-brand"
-                    : "cursor-pointer border-transparent bg-surface-2/50 hover:border-border/50 focus:border-transparent focus:ring-0 text-ink-muted"
+                    ? "border-border bg-surface shadow-inner focus:border-brand focus:ring-2 focus:ring-brand/20"
+                    : "cursor-pointer border-transparent bg-surface hover:border-brand focus:border-transparent focus:ring-0 text-ink-muted"
                 }`}
               />
 
@@ -257,7 +261,7 @@ export default function GameDetail() {
               </AnimatePresence>
 
               {isEditing && !confirmingDelete && (
-                <div className="absolute right-2 bottom-2 flex gap-2">
+                <div className="absolute right-3 bottom-3 flex gap-2">
                   {game.review && (
                     <Button
                       variant="ghost"
