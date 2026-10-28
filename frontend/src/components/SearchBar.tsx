@@ -31,7 +31,7 @@ export function SearchBar({
   const displayClear = showClear || selected;
 
   return (
-    <InputGroup className="rounded border border-border bg-surface-2/60 transition-colors focus:border-brand has-[[data-slot=input-group-control]:disabled]:opacity-60 has-[[data-slot=input-group-control]:disabled]:bg-surface-2/60">
+    <InputGroup className="rounded border border-border bg-surface-2/60! transition-all duration-200 ease-out focus-within:border-brand focus-within:shadow-[0_0_0_3px_rgba(var(--brand),0.15)] has-[[data-slot=input-group-control]:disabled]:opacity-60 has-[[data-slot=input-group-control]:disabled]:bg-surface-2/60">
       <InputGroupInput
         value={value}
         onChange={(e) => onChange(e.target.value)}

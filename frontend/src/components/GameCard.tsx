@@ -1,69 +1,98 @@
-import { useState } from "react";
-import { type UserGame } from "../types/Game";
-import { useGameStore } from "../stores/gameStore";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import { useGameStore } from "../stores/gameStore";
+import { type UserGame } from "../types/Game";
 import GameCover from "./GameCover";
-import StatusMenu from "./StatusMenu";
 import PlatformBadge from "./PlatformBadge";
-import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
+import StatusMenu from "./StatusMenu";
+import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { useState } from "react";
 
 type Props = {
   game: UserGame;
-  onClick?: (game: UserGame) => void;
+  index?: number;
 };
 
-export default function GameCard({ game }: Props) {
-  const updateStatus = useGameStore((s) => s.updateStatus);
-  const remove = useGameStore((s) => s.remove);
+export default function GameCard({ game, index = 0 }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const updateStatus = useGameStore((s) => s.updateStatus);
+  const removeGame = useGameStore((s) => s.remove);
+
   async function handleConfirmDelete() {
     setIsDeleting(true);
-    const ok = await remove(game._id);
-    if (!ok) {
+    try {
+      await removeGame(game._id);
+    } finally {
       setIsDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
   return (
-    <li className="group">
-      <div className="transition-all duration-200 ease-out group-hover:-translate-y-1">
+    <motion.li
+      layout
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+      whileHover={{ y: -4, scale: 1.02 }}
+      transition={{
+        duration: 0.4,
+        ease: "easeOut",
+        delay: Math.min(index * 0.03, 0.45),
+      }}
+      className="group relative"
+    >
+      <div>
         <div className="relative aspect-3/4 w-full overflow-hidden rounded group-hover:shadow-lg group-hover:shadow-black/50">
           <Link to={`/games/${game._id}`} className="block h-full w-full">
             <GameCover game={game} />
           </Link>
 
-          {confirmDelete ? (
-            <DeleteConfirmOverlay
-              onConfirm={handleConfirmDelete}
-              onCancel={() => setConfirmDelete(false)}
-              isDeleting={isDeleting}
-            />
-          ) : (
-            <>
-              <div className="absolute left-1 top-1 z-10">
-                <PlatformBadge platform={game.platform} size="sm" />
-              </div>
-              <div className="absolute bottom-1 left-1 z-10">
-                <StatusMenu
-                  status={game.status}
-                  onChange={async (s) => {
-                    await updateStatus(game._id, s);
-                  }}
-                  direction="up"
-                  size="sm"
+          <AnimatePresence mode="wait">
+            {confirmDelete ? (
+              <motion.div key="overlay" className="absolute inset-0 z-20">
+                <DeleteConfirmOverlay
+                  onConfirm={handleConfirmDelete}
+                  onCancel={() => setConfirmDelete(false)}
+                  isDeleting={isDeleting}
                 />
-              </div>
-
-              <button
-                onClick={() => setConfirmDelete(true)}
-                className="absolute right-1 top-1 cursor-pointer rounded bg-black/70 px-1.5 py-0.5 text-xs text-ink opacity-0 transition-opacity group-hover:opacity-100"
+              </motion.div>
+            ) : (
+              <motion.div
+                key="card-content"
+                className="pointer-events-none absolute inset-0 z-10"
               >
-                ×
-              </button>
-            </>
-          )}
+                {/* Added pointer-events-auto to the badges and buttons */}
+                <div className="pointer-events-auto absolute left-1 top-1 z-10">
+                  <PlatformBadge platform={game.platform} size="sm" />
+                </div>
+                <div className="pointer-events-auto absolute bottom-1 left-1 z-10">
+                  <StatusMenu
+                    status={game.status}
+                    onChange={async (s) => {
+                      await updateStatus(game._id, s);
+                    }}
+                    direction="up"
+                    size="sm"
+                  />
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => setConfirmDelete(true)}
+                  className="pointer-events-auto absolute right-1 top-1 z-10 bg-bg/70 text-ink opacity-0 transition-all hover:bg-destructive hover:text-ink group-hover:opacity-100"
+                  aria-label="Delete game"
+                >
+                  <X />
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <Link to={`/games/${game._id}`} className="mt-1 block">
@@ -72,6 +101,6 @@ export default function GameCard({ game }: Props) {
           </div>
         </Link>
       </div>
-    </li>
+    </motion.li>
   );
 }

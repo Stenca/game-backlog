@@ -9,12 +9,16 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
+
     try {
       const data = await apiFetch<{ token: string; user: any }>(
         "/api/auth/login",
@@ -27,15 +31,18 @@ export default function Login() {
       navigate("/games");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-sm rounded border border-border bg-background p-8">
+    <div className="mx-auto mt-16 max-w-sm rounded border border-border bg-surface p-8">
       <h1 className="mb-2 text-3xl font-bold tracking-tight text-ink">
         Log in
       </h1>
       <p className="mb-8 text-sm text-ink-muted">Welcome back to Bonfire.</p>
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <Input
           type="email"
@@ -44,7 +51,7 @@ export default function Login() {
           placeholder="Email"
           autoComplete="email"
           required
-          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
+          className="bg-surface-2"
         />
         <Input
           type="password"
@@ -53,7 +60,7 @@ export default function Login() {
           placeholder="Password"
           autoComplete="current-password"
           required
-          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
+          className="bg-surface-2"
         />
 
         {error && (
@@ -62,13 +69,11 @@ export default function Login() {
           </p>
         )}
 
-        <Button
-          type="submit"
-          className="mt-2 w-full rounded bg-brand text-background hover:bg-brand-hover"
-        >
+        <Button type="submit" className="mt-2 w-full" isLoading={isLoading}>
           Log in
         </Button>
       </form>
+
       <p className="mt-6 text-center text-xs text-ink-muted">
         Don't have an account?{" "}
         <Link

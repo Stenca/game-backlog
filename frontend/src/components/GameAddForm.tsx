@@ -4,7 +4,6 @@ import { useGameStore } from "../stores/gameStore";
 import GameSearch from "./GameSearch";
 import FilterSelect from "./FilterSelect";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import {
   STATUSES,
   type GameDetails,
@@ -129,17 +128,11 @@ export default function GameAddForm() {
 
             <Button
               type="submit"
-              disabled={!platform || isAdding}
-              className="flex min-w-20 items-center justify-center gap-2 rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={!platform}
+              isLoading={isAdding}
+              className="min-w-20"
             >
-              {isAdding ? (
-                <>
-                  <Spinner className="h-4 w-4 text-black" />
-                  Adding…
-                </>
-              ) : (
-                "Add"
-              )}
+              Add
             </Button>
           </div>
         </>

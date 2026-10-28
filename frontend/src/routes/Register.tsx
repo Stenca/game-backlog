@@ -10,12 +10,16 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
+
     try {
       const data = await apiFetch<{ token: string; user: User }>(
         "/api/auth/register",
@@ -33,11 +37,13 @@ export default function Register() {
       navigate("/games");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto mt-16 max-w-sm rounded border border-border bg-background p-8">
+    <div className="mx-auto mt-16 max-w-sm rounded border border-border bg-surface p-8">
       <h1 className="mb-2 text-3xl font-bold tracking-tight text-ink">
         Create an account
       </h1>
@@ -55,7 +61,6 @@ export default function Register() {
           required
           minLength={3}
           maxLength={20}
-          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
         />
         <Input
           type="email"
@@ -64,7 +69,6 @@ export default function Register() {
           placeholder="Email"
           autoComplete="email"
           required
-          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
         />
         <Input
           type="password"
@@ -74,7 +78,6 @@ export default function Register() {
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded border-border bg-surface-2 text-ink placeholder:text-ink-dim focus-visible:border-brand focus-visible:ring-brand focus-visible:ring-1"
         />
 
         <p className="text-xs text-ink-dim">
@@ -88,10 +91,7 @@ export default function Register() {
           </p>
         )}
 
-        <Button
-          type="submit"
-          className="mt-2 w-full rounded bg-brand text-background hover:bg-brand-hover"
-        >
+        <Button type="submit" className="mt-2 w-full" isLoading={isLoading}>
           Create account
         </Button>
       </form>

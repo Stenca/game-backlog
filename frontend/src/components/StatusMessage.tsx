@@ -17,7 +17,7 @@ export default function StatusMessage({ message, variant = "success" }: Props) {
     <AnimatePresence mode="wait">
       {message && (
         <motion.p
-          key={message} // re-animates when the message text changes
+          key={message}
           initial={{ opacity: 0, y: 8, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -4, scale: 0.98 }}

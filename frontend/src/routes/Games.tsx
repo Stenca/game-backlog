@@ -8,7 +8,8 @@ import FilterSelect from "@/components/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
 import bonfireImg from "../assets/bonfire.png";
 import GameAddForm from "../components/GameAddForm";
-import { SearchBar } from "../components/SearchBar"; // Adjust path if needed
+import { SearchBar } from "../components/SearchBar";
+import { Button } from "@/components/ui/button"; // <-- Added import
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -137,31 +138,33 @@ export default function Games() {
               </div>
             ) : (
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {paginatedGames.map((g) => (
-                  <GameCard key={g._id} game={g} />
+                {paginatedGames.map((g, i) => (
+                  <GameCard key={g._id} game={g} index={i} />
                 ))}
               </ul>
             )}
 
             {totalPages > 1 && (
               <div className="mt-8 flex items-center justify-center gap-4">
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Previous
-                </button>
+                </Button>
                 <span className="text-sm text-ink-muted">
                   Page {page} of {totalPages}
                 </span>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="cursor-pointer rounded border border-border px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
-                </button>
+                </Button>
               </div>
             )}
           </>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { useJournalStore } from "../stores/journalStore";
 import type { JournalEntry } from "../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
@@ -6,7 +7,6 @@ import FileUpload from "./FileUpload";
 import AttachmentPreview from "@/components/AttachmentPreview";
 import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   entry: JournalEntry;
@@ -16,6 +16,7 @@ export default function JournalEntryItem({ entry }: Props) {
   const [editBody, setEditBody] = useState(entry.body || "");
   const [editImage, setEditImage] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [removeImage, setRemoveImage] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState("");
@@ -89,11 +90,16 @@ export default function JournalEntryItem({ entry }: Props) {
   }
 
   async function handleConfirmDelete() {
-    const ok = await removeEntry(entry._id, entry.gameId);
-    if (ok) {
-      setConfirmOpen(false);
-    } else {
-      setError("Failed to delete entry");
+    setDeleting(true);
+    try {
+      const ok = await removeEntry(entry._id, entry.gameId);
+      if (ok) {
+        setConfirmOpen(false);
+      } else {
+        setError("Failed to delete entry");
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -126,26 +132,17 @@ export default function JournalEntryItem({ entry }: Props) {
 
           {error && <p className="text-xs text-destructive">{error}</p>}
 
-          <div className="flex justify-end gap-3 border-t border-border/50 pt-3">
-            <button
+          <div className="flex justify-end gap-2 border-t border-border/50 pt-3">
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={cancelEdit}
-              className="cursor-pointer text-xs font-medium text-ink-muted transition-colors hover:text-brand"
             >
               Cancel
-            </button>
-            <Button
-              type="submit"
-              className="cursor-pointer rounded bg-brand px-4 py-1.5 text-xs font-medium text-black transition-colors hover:bg-brand-hover"
-            >
-              {saving ? (
-                <>
-                  <Spinner className="h-4 w-4 text-black" />
-                  Saving...
-                </>
-              ) : (
-                "Save changes"
-              )}
+            </Button>
+            <Button type="submit" size="sm" isLoading={saving}>
+              Save changes
             </Button>
           </div>
         </form>
@@ -159,19 +156,23 @@ export default function JournalEntryItem({ entry }: Props) {
               </span>
             </span>
 
-            <div className="flex shrink-0 gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-              <button
+            <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={startEdit}
-                className="cursor-pointer text-xs text-ink-muted hover:text-brand"
+                className="h-7 px-2 text-xs text-ink-muted hover:text-brand"
               >
                 Edit
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setConfirmOpen(true)}
-                className="cursor-pointer text-xs text-ink-muted hover:text-destructive"
+                className="h-7 px-2 text-xs text-ink-muted hover:text-destructive"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -194,12 +195,23 @@ export default function JournalEntryItem({ entry }: Props) {
         </>
       )}
 
-      {confirmOpen && (
-        <DeleteConfirmOverlay
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setConfirmOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {confirmOpen && (
+          <motion.div
+            key="delete-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-20"
+          >
+            <DeleteConfirmOverlay
+              onConfirm={handleConfirmDelete}
+              onCancel={() => setConfirmOpen(false)}
+              isDeleting={deleting}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </li>
   );
 }

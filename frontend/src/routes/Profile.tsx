@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import { useAuthStore, type User } from "../stores/authStore";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
 import StatusMessage from "@/components/StatusMessage";
 
 export default function Profile() {
@@ -107,10 +107,10 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               Username
             </span>
-            <input
+            {/* Removed bg-surface-2 so it uses the default Input styles */}
+            <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-brand focus:outline-none"
             />
             <span className="text-[11px] text-ink-dim">
               Lowercase, 3–20 characters. Used for login. Must be unique.
@@ -121,10 +121,9 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               Display name
             </span>
-            <input
+            <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-brand focus:outline-none"
             />
             <span className="text-[11px] text-ink-dim">
               What other users see. 1–20 characters.
@@ -135,11 +134,10 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               Email
             </span>
-            <input
+            <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -151,22 +149,10 @@ export default function Profile() {
 
             <Button
               type="submit"
-              disabled={updateProfileMutation.isPending}
-              className="relative shrink-0 cursor-pointer rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+              isLoading={updateProfileMutation.isPending}
+              className="shrink-0"
             >
-              <span className="invisible" aria-hidden="true">
-                Save changes
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center gap-2">
-                {updateProfileMutation.isPending ? (
-                  <>
-                    <Spinner className="h-4 w-4 text-black" />
-                    Saving…
-                  </>
-                ) : (
-                  "Save changes"
-                )}
-              </span>
+              Save changes
             </Button>
           </div>
         </form>
@@ -183,13 +169,12 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               Current password
             </span>
-            <input
+            <Input
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               autoComplete="current-password"
               required
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -197,14 +182,13 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               New password
             </span>
-            <input
+            <Input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               autoComplete="new-password"
               required
               minLength={8}
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -212,13 +196,12 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               Confirm new password
             </span>
-            <input
+            <Input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
               required
-              className="rounded border border-border bg-surface-2 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
             />
           </label>
 
@@ -230,22 +213,10 @@ export default function Profile() {
 
             <Button
               type="submit"
-              disabled={updatePasswordMutation.isPending}
-              className="relative shrink-0 cursor-pointer rounded bg-brand px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+              isLoading={updatePasswordMutation.isPending}
+              className="shrink-0"
             >
-              <span className="invisible" aria-hidden="true">
-                Update password
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center gap-2">
-                {updatePasswordMutation.isPending ? (
-                  <>
-                    <Spinner className="h-4 w-4 text-black" />
-                    Updating...
-                  </>
-                ) : (
-                  "Update password"
-                )}
-              </span>
+              Update password
             </Button>
           </div>
         </form>

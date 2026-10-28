@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
@@ -13,7 +14,6 @@ import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/GameTimeline";
 import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
-import { Spinner } from "@/components/ui/spinner";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -189,19 +189,23 @@ export default function GameDetail() {
               </div>
 
               {game.review && !isEditing && (
-                <div className="flex shrink-0 items-center gap-3">
-                  <button
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="cursor-pointer text-xs font-medium text-brand transition-colors hover:text-brand-hover"
+                    className="text-xs text-brand hover:text-brand-hover"
                   >
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setConfirmingDelete(true)}
-                    className="cursor-pointer text-xs font-medium text-destructive transition-colors hover:text-red-600"
+                    className="text-xs text-destructive hover:text-destructive-hover"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -220,7 +224,10 @@ export default function GameDetail() {
                       handleSaveReview();
                     }
                   }
-                  setConfirmingDelete(false);
+                  if (e.key === "Escape" && confirmingDelete) {
+                    e.preventDefault();
+                    setConfirmingDelete(false);
+                  }
                 }}
                 placeholder="What did you think of this game?"
                 readOnly={!isEditing || confirmingDelete}
@@ -231,41 +238,45 @@ export default function GameDetail() {
                 }`}
               />
 
-              {confirmingDelete && (
-                <DeleteConfirmOverlay
-                  onConfirm={handleDeleteReview}
-                  onCancel={() => setConfirmingDelete(false)}
-                  isDeleting={savingReview}
-                />
-              )}
+              <AnimatePresence>
+                {confirmingDelete && (
+                  <motion.div
+                    key="delete-review-overlay"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-20"
+                  >
+                    <DeleteConfirmOverlay
+                      onConfirm={handleDeleteReview}
+                      onCancel={() => setConfirmingDelete(false)}
+                      isDeleting={savingReview}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {isEditing && !confirmingDelete && (
                 <div className="absolute right-2 bottom-2 flex gap-2">
                   {game.review && (
                     <Button
-                      variant="outline"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setReview(game.review ?? "");
                         setIsEditing(false);
                       }}
-                      className="cursor-pointer border-border bg-surface/80 text-ink hover:text-brand"
                     >
                       Cancel
                     </Button>
                   )}
                   <Button
+                    size="sm"
                     onClick={handleSaveReview}
-                    disabled={!hasReviewChanges || savingReview}
-                    className="cursor-pointer rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={!hasReviewChanges}
+                    isLoading={savingReview}
                   >
-                    {savingReview ? (
-                      <>
-                        <Spinner className="h-4 w-4 text-black" />
-                        Saving...
-                      </>
-                    ) : (
-                      "Save Review"
-                    )}
+                    Save Review
                   </Button>
                 </div>
               )}

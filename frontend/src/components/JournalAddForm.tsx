@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import FileUpload from "./FileUpload";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   gameId: string;
@@ -28,16 +27,18 @@ export default function JournalAddForm({ gameId }: Props) {
     if (newEntry.trim()) formData.append("body", newEntry.trim());
     if (imageFile) formData.append("image", imageFile);
 
-    const ok = await addEntry(gameId, formData);
+    try {
+      const ok = await addEntry(gameId, formData);
 
-    if (ok) {
-      setNewEntry("");
-      setImageFile(null);
-    } else {
-      setError("Failed to add entry. Please try again.");
+      if (ok) {
+        setNewEntry("");
+        setImageFile(null);
+      } else {
+        setError("Failed to add entry. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   }
 
   return (
@@ -71,17 +72,11 @@ export default function JournalAddForm({ gameId }: Props) {
 
         <Button
           type="submit"
-          disabled={submitting || (!newEntry.trim() && !imageFile)}
-          className="shrink-0 rounded bg-brand px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!newEntry.trim() && !imageFile}
+          isLoading={submitting}
+          className="shrink-0"
         >
-          {submitting ? (
-            <>
-              <Spinner className="h-4 w-4 text-black" />
-              Posting...
-            </>
-          ) : (
-            "Post"
-          )}
+          Post
         </Button>
       </div>
     </form>
