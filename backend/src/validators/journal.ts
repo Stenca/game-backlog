@@ -6,6 +6,8 @@ export const createJournalEntrySchema = z.object({
 });
 
 export const updateJournalEntrySchema = z.object({
-  body: z.string().trim().max(5000).optional(),
-  removeImage: z.string().optional(),
+  body: z.string().optional(),
+  existingImages: z.string().optional(),
+  existingPublicIds: z.string().optional(),
+  removedPublicIds: z.string().optional(),
 });

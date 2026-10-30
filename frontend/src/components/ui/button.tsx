@@ -16,16 +16,13 @@ const buttonVariants = cva(
         link: "text-brand underline-offset-4 hover:underline",
       },
       size: {
-        default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+        default: "h-8 gap-1.5 px-2.5",
+        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs",
+        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem]",
+        lg: "h-9 gap-1.5 px-2.5",
         icon: "size-8",
-        "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-xs": "size-6 rounded-[min(var(--radius-md),10px)]",
+        "icon-sm": "size-7 rounded-[min(var(--radius-md),12px)]",
         "icon-lg": "size-9",
       },
     },
@@ -55,37 +52,47 @@ function Button({
       data-slot="button"
       className={cn(
         buttonVariants({ variant, size, className }),
-        isLoading && "relative text-transparent opacity-80",
+        "grid place-items-center relative",
       )}
       disabled={disabled || isLoading}
       {...props}
     >
-      <span className={isLoading ? "invisible" : ""}>{children}</span>
+      <span
+        className={cn(
+          "col-start-1 row-start-1 transition-opacity duration-200",
+          isLoading ? "opacity-0" : "opacity-100",
+        )}
+      >
+        {children}
+      </span>
 
-      {isLoading && (
-        <span className="absolute inset-0 flex items-center justify-center">
-          <svg
-            className="h-4 w-4 animate-spin text-current"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-        </span>
-      )}
+      <span
+        className={cn(
+          "col-start-1 row-start-1 flex items-center justify-center transition-opacity duration-200",
+          isLoading ? "opacity-100" : "opacity-0 pointer-events-none",
+        )}
+      >
+        <svg
+          className="h-4 w-4 animate-spin text-current"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          />
+        </svg>
+      </span>
     </ButtonPrimitive>
   );
 }

@@ -15,8 +15,9 @@ const journalEntrySchema = new mongoose.Schema(
       index: true,
     },
     body: { type: String, trim: true, maxlength: 5000 },
-    imageUrl: { type: String },
-    imagePublicId: { type: String },
+
+    imageUrls: { type: [String], default: [] },
+    imagePublicIds: { type: [String], default: [] },
   },
   { timestamps: true },
 );

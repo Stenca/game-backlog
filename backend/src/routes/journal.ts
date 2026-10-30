@@ -9,7 +9,6 @@ import {
 } from "../validators/journal.js";
 import multer from "multer";
 import cloudinary from "../utils/cloudinary.js";
-import mongoose from "mongoose";
 
 const journalRouter = Router();
 
@@ -41,11 +40,13 @@ journalRouter.get("/game/:userGameId", async (req: AuthedRequest, res) => {
 
 journalRouter.post(
   "/",
-  upload.single("image"),
+  upload.array("images", 5),
   validate(createJournalEntrySchema),
   async (req: AuthedRequest, res) => {
     try {
-      if (!req.body.body?.trim() && !req.file) {
+      const files = req.files as Express.Multer.File[] | undefined;
+
+      if (!req.body.body?.trim() && (!files || files.length === 0)) {
         res
           .status(400)
           .json({ error: "Entry cannot be empty. Add text or an image." });
@@ -64,25 +65,29 @@ journalRouter.post(
         return;
       }
 
-      let imageUrl = null;
-      let imagePublicId = null;
+      const imageUrls: string[] = [];
+      const imagePublicIds: string[] = [];
 
-      if (req.file) {
-        const b64 = Buffer.from(req.file.buffer).toString("base64");
-        const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: "bonfire-journals",
-        });
-        imageUrl = result.secure_url;
-        imagePublicId = result.public_id;
+      if (files && files.length > 0) {
+        for (const file of files) {
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = "data:" + file.mimetype + ";base64," + b64;
+
+          const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "bonfire-journals",
+          });
+
+          imageUrls.push(result.secure_url);
+          imagePublicIds.push(result.public_id);
+        }
       }
 
       const entry = await JournalEntry.create({
         userId: req.userId,
         gameId: req.body.gameId,
         body: req.body.body?.trim() || undefined,
-        imageUrl: imageUrl || undefined,
-        imagePublicId: imagePublicId || undefined,
+        imageUrls,
+        imagePublicIds,
       });
 
       res.status(201).json(entry);
@@ -95,54 +100,75 @@ journalRouter.post(
 
 journalRouter.patch(
   "/:id",
-  upload.single("image"),
+  upload.array("images", 4),
   validate(updateJournalEntrySchema),
   async (req: AuthedRequest, res) => {
     try {
-      const entry = (await JournalEntry.findOne({
+      const entry = await JournalEntry.findOne({
         _id: req.params.id,
         userId: req.userId,
-      })) as mongoose.HydratedDocument<any>;
+      });
 
       if (!entry) {
         res.status(404).json({ error: "Entry not found" });
         return;
       }
 
+      const files = req.files as Express.Multer.File[] | undefined;
+
+      // 1. Update body
       if (req.body.body !== undefined) {
         entry.body = req.body.body.trim() || undefined;
       }
 
-      const removeImage =
-        req.body.removeImage === "true" || req.body.removeImage === true;
-      if (removeImage && entry.imagePublicId) {
-        await cloudinary.uploader.destroy(entry.imagePublicId, {
-          invalidate: true,
-          resource_type: "image",
-        });
-        entry.imageUrl = undefined;
-        entry.imagePublicId = undefined;
+      // 2. Read the NEW arrays from the frontend.
+      // If the frontend sends an empty array, it will properly clear them.
+      let keptUrls: string[] = [];
+      let keptPublicIds: string[] = [];
+
+      if (req.body.existingImages) {
+        keptUrls = JSON.parse(req.body.existingImages);
+      }
+      if (req.body.existingPublicIds) {
+        keptPublicIds = JSON.parse(req.body.existingPublicIds);
       }
 
-      if (req.file) {
-        if (entry.imagePublicId) {
-          await cloudinary.uploader.destroy(entry.imagePublicId, {
-            invalidate: true,
-            resource_type: "image",
-          });
+      // 3. Destroy the removed IDs in Cloudinary
+      if (req.body.removedPublicIds) {
+        const removedIds = JSON.parse(req.body.removedPublicIds) as string[];
+
+        for (const id of removedIds) {
+          try {
+            await cloudinary.uploader.destroy(id, {
+              invalidate: true,
+              resource_type: "image",
+            });
+          } catch (err) {
+            console.error(`[cloudinary/destroy] Failed for ${id}:`, err);
+          }
         }
-
-        const b64 = Buffer.from(req.file.buffer).toString("base64");
-        const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: "bonfire-journals",
-        });
-
-        entry.imageUrl = result.secure_url;
-        entry.imagePublicId = result.public_id;
       }
 
-      if (!entry.body && !entry.imageUrl) {
+      // 4. Upload new files
+      if (files && files.length > 0) {
+        for (const file of files) {
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          const dataURI = "data:" + file.mimetype + ";base64," + b64;
+
+          const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "bonfire-journals",
+          });
+
+          keptUrls.push(result.secure_url);
+          keptPublicIds.push(result.public_id);
+        }
+      }
+
+      // 5. Save the completely updated arrays
+      entry.imageUrls = keptUrls;
+      entry.imagePublicIds = keptPublicIds;
+
+      if (!entry.body && entry.imageUrls.length === 0) {
         await entry.deleteOne();
         res.status(204).end();
         return;
@@ -152,7 +178,7 @@ journalRouter.patch(
       res.json(entry);
     } catch (err) {
       console.error("[journal/patch]", err);
-      res.status(400).json({ error: "Invalid id" });
+      res.status(400).json({ error: "Invalid id or data" });
     }
   },
 );
@@ -169,14 +195,16 @@ journalRouter.delete("/:id", async (req: AuthedRequest, res) => {
       return;
     }
 
-    if (entry.imagePublicId) {
-      try {
-        await cloudinary.uploader.destroy(entry.imagePublicId, {
-          invalidate: true,
-          resource_type: "image",
-        });
-      } catch (err) {
-        console.error("[cloudinary/destroy] FAILED:", err);
+    if (entry.imagePublicIds && entry.imagePublicIds.length > 0) {
+      for (const publicId of entry.imagePublicIds) {
+        try {
+          await cloudinary.uploader.destroy(publicId, {
+            invalidate: true,
+            resource_type: "image",
+          });
+        } catch (err) {
+          console.error(`[cloudinary/destroy] FAILED for ${publicId}:`, err);
+        }
       }
     }
 
