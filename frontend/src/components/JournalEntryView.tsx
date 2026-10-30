@@ -50,6 +50,12 @@ export default function JournalEntryView({ entry, onEdit, onDelete }: Props) {
         </div>
       </div>
 
+      {entry.body && (
+        <p className="mb-3 text-sm leading-relaxed whitespace-pre-wrap text-ink">
+          {entry.body}
+        </p>
+      )}
+
       {entry.imageUrls && entry.imageUrls.length > 0 && (
         <div
           className={`mt-3 grid gap-2 ${
@@ -69,7 +75,7 @@ export default function JournalEntryView({ entry, onEdit, onDelete }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 onClick={() => openCarousel(i)}
-                className={`cursor-pointer overflow-hidden rounded border border-border/50 bg-surface-2 transition-transform hover:border-brand hover:scale-[1.02] ${
+                className={`cursor-pointer overflow-hidden rounded border border-border/50 bg-surface-2 transition-all duration-300 hover:border-brand hover:scale-[1.02] ${
                   isHero ? "col-span-2" : "col-span-1"
                 }`}
               >
