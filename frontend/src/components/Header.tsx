@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
-import bonfireImg from "../assets/bonfire.png";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
 
 export default function Header() {
   const user = useAuthStore((s) => s.user);
@@ -16,19 +16,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-brand bg-surface/50 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-        <Link
-          to="/games"
-          className="flex shrink-0 items-center text-lg font-bold tracking-tight text-foreground transition-colors hover:text-primary"
-        >
-          <img
-            src={bonfireImg}
-            alt=""
-            className="h-7 w-7 shrink-0 object-contain"
-          />
-          <span className="whitespace-nowrap">
-            <span className="text-brand">Bon</span>fire.
-          </span>
-        </Link>
+        <Logo size="sm" />
 
         <nav className="flex items-center gap-6">
           {user ? (

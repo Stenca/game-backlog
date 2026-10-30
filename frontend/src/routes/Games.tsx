@@ -6,10 +6,10 @@ import Loading from "@/components/Loading";
 import { sortGames, STATUS_ORDER } from "@/utils/status";
 import FilterSelect from "@/components/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
-import bonfireImg from "../assets/bonfire.png";
 import GameAddForm from "../components/GameAddForm";
 import { SearchBar } from "../components/SearchBar";
 import { Button } from "@/components/ui/button"; // <-- Added import
+import Logo from "@/components/Logo";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -74,13 +74,11 @@ export default function Games() {
     <div className="min-h-screen bg-bg">
       <main className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-5">
-          <div className="mb-5 flex flex-wrap items-baseline">
-            <img src={bonfireImg} alt="" className="h-12 w-12 object-contain" />
-            <h1 className="mr-4 text-6xl font-bold tracking-tight text-ink">
-              <span className="text-brand">Bon</span>fire.
-            </h1>
-            <p className="text-lg text-ink-muted">Your journey, remembered.</p>
-          </div>
+          <Logo
+            size="lg"
+            tagline="Your journey, remembered."
+            className="mb-4"
+          />
 
           <p className="text-base">
             Track your games and take notes of your progress.
