@@ -66,7 +66,6 @@ export default function GameCard({ game, index = 0 }: Props) {
                 key="card-content"
                 className="pointer-events-none absolute inset-0 z-10"
               >
-                {/* Added pointer-events-auto to the badges and buttons */}
                 <div className="pointer-events-auto absolute left-1 top-1 z-10">
                   <PlatformBadge platform={game.platform} size="sm" />
                 </div>
@@ -81,15 +80,17 @@ export default function GameCard({ game, index = 0 }: Props) {
                   />
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => setConfirmDelete(true)}
-                  className="pointer-events-auto absolute right-1 top-1 z-10 bg-bg/70 text-ink opacity-0 transition-all hover:bg-destructive hover:text-ink group-hover:opacity-100"
-                  aria-label="Delete game"
-                >
-                  <X />
-                </Button>
+                <div className="pointer-events-auto absolute right-1 top-1 z-20">
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => setConfirmDelete(true)}
+                    className="bg-bg/70 text-ink opacity-0 transition-all hover:bg-destructive hover:text-ink group-hover:opacity-100"
+                    aria-label="Delete game"
+                  >
+                    <X />
+                  </Button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

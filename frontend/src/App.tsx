@@ -7,6 +7,7 @@ import Login from "./routes/Login";
 import Profile from "./routes/Profile";
 import Register from "./routes/Register";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/toast";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster />
     </div>
   );
 }

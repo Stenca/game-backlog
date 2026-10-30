@@ -116,13 +116,10 @@ journalRouter.patch(
 
       const files = req.files as Express.Multer.File[] | undefined;
 
-      // 1. Update body
       if (req.body.body !== undefined) {
         entry.body = req.body.body.trim() || undefined;
       }
 
-      // 2. Read the NEW arrays from the frontend.
-      // If the frontend sends an empty array, it will properly clear them.
       let keptUrls: string[] = [];
       let keptPublicIds: string[] = [];
 
@@ -133,7 +130,6 @@ journalRouter.patch(
         keptPublicIds = JSON.parse(req.body.existingPublicIds);
       }
 
-      // 3. Destroy the removed IDs in Cloudinary
       if (req.body.removedPublicIds) {
         const removedIds = JSON.parse(req.body.removedPublicIds) as string[];
 
@@ -149,7 +145,6 @@ journalRouter.patch(
         }
       }
 
-      // 4. Upload new files
       if (files && files.length > 0) {
         for (const file of files) {
           const b64 = Buffer.from(file.buffer).toString("base64");
@@ -164,7 +159,6 @@ journalRouter.patch(
         }
       }
 
-      // 5. Save the completely updated arrays
       entry.imageUrls = keptUrls;
       entry.imagePublicIds = keptPublicIds;
 
