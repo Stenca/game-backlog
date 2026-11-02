@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { apiFetch } from "../api";
 import { queryClient } from "../main";
-import type { JournalEntry } from "../types/Game";
 import { useAuthStore } from "@/stores/authStore";
 
 type JournalStore = {
@@ -20,7 +19,7 @@ export const useJournalStore = create<JournalStore>((set) => ({
   editingId: null,
   setEditingId: (id) => set({ editingId: id }),
 
-  addEntry: async (gameId: string, formData: FormData) => {
+  addEntry: async (gameId, formData) => {
     try {
       const token = useAuthStore.getState().token;
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/journal`, {
@@ -29,12 +28,8 @@ export const useJournalStore = create<JournalStore>((set) => ({
         body: formData,
       });
       if (!res.ok) throw new Error("Failed to add entry");
-      const created = await res.json();
 
-      queryClient.setQueryData<JournalEntry[]>(
-        ["journal", gameId],
-        (old = []) => [created, ...old],
-      );
+      await queryClient.invalidateQueries({ queryKey: ["journal"] });
       set({ editingId: null });
       return true;
     } catch (err) {
@@ -43,7 +38,7 @@ export const useJournalStore = create<JournalStore>((set) => ({
     }
   },
 
-  updateEntry: async (id: string, gameId: string, formData: FormData) => {
+  updateEntry: async (id, gameId, formData) => {
     try {
       const token = useAuthStore.getState().token;
       const res = await fetch(
@@ -55,12 +50,8 @@ export const useJournalStore = create<JournalStore>((set) => ({
         },
       );
       if (!res.ok) throw new Error("Failed to update entry");
-      const updated = await res.json();
 
-      queryClient.setQueryData<JournalEntry[]>(
-        ["journal", gameId],
-        (old = []) => old.map((e) => (e._id === id ? updated : e)),
-      );
+      await queryClient.invalidateQueries({ queryKey: ["journal"] });
       set({ editingId: null });
       return true;
     } catch (err) {
@@ -69,14 +60,11 @@ export const useJournalStore = create<JournalStore>((set) => ({
     }
   },
 
-  removeEntry: async (id: string, gameId: string) => {
+  removeEntry: async (id, gameId) => {
     try {
       await apiFetch(`/api/journal/${id}`, { method: "DELETE" });
 
-      queryClient.setQueryData<JournalEntry[]>(
-        ["journal", gameId],
-        (old = []) => old.filter((e) => e._id !== id),
-      );
+      await queryClient.invalidateQueries({ queryKey: ["journal"] });
       set({ editingId: null });
       return true;
     } catch (err) {
