@@ -9,6 +9,7 @@ import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "@/components/ui/toast";
 
 type Props = {
   game: UserGame;
@@ -26,6 +27,7 @@ export default function GameCard({ game, index = 0 }: Props) {
     setIsDeleting(true);
     try {
       await removeGame(game._id);
+      toast.add({ type: "success", title: "Game removed from library" });
     } finally {
       setIsDeleting(false);
       setConfirmDelete(false);
@@ -74,6 +76,11 @@ export default function GameCard({ game, index = 0 }: Props) {
                     status={game.status}
                     onChange={async (s) => {
                       await updateStatus(game._id, s);
+                      toast.add({
+                        type: "success",
+                        title: "Status updated",
+                        description: `Moved to ${s}.`,
+                      });
                     }}
                     direction="up"
                     size="sm"

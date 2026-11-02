@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/GameTimeline";
 import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
 import ErrorState from "@/components/ErrorState";
+import { toast } from "@/components/ui/toast";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -66,7 +67,20 @@ export default function GameDetail() {
 
   async function handleStatusChange(newStatus: Status) {
     if (!game) return;
-    await updateStatus(game._id, newStatus);
+    const ok = await updateStatus(game._id, newStatus);
+
+    if (ok) {
+      toast.add({
+        type: "success",
+        title: "Status updated",
+        description: `Moved to ${newStatus}.`,
+      });
+    } else {
+      toast.add({
+        type: "error",
+        title: "Failed to update status",
+      });
+    }
   }
 
   async function handleRatingChange(newRating: number) {
@@ -74,15 +88,23 @@ export default function GameDetail() {
     const previousRating = rating;
     setRating(newRating);
     const ok = await updateGame(game._id, { rating: newRating });
-    if (!ok) setRating(previousRating);
+    if (!ok) {
+      setRating(previousRating);
+      toast.add({ type: "error", title: "Failed to update rating" });
+    }
   }
 
   async function handleSaveReview() {
     if (!game) return;
     setSavingReview(true);
     try {
-      await updateGame(game._id, { review });
-      setIsEditing(false);
+      const ok = await updateGame(game._id, { review });
+      if (ok) {
+        setIsEditing(false);
+        toast.add({ type: "success", title: "Review saved" });
+      } else {
+        toast.add({ type: "error", title: "Failed to save review" });
+      }
     } finally {
       setSavingReview(false);
     }
@@ -92,10 +114,15 @@ export default function GameDetail() {
     if (!game) return;
     setSavingReview(true);
     try {
-      await updateGame(game._id, { review: "" });
-      setReview("");
-      setIsEditing(false);
-      setConfirmingDelete(false);
+      const ok = await updateGame(game._id, { review: "" });
+      if (ok) {
+        setReview("");
+        setIsEditing(false);
+        setConfirmingDelete(false);
+        toast.add({ type: "success", title: "Review deleted" });
+      } else {
+        toast.add({ type: "error", title: "Failed to delete review" });
+      }
     } finally {
       setSavingReview(false);
     }

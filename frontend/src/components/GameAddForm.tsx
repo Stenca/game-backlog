@@ -11,6 +11,7 @@ import {
   type SearchResult,
   type Status,
 } from "../types/Game";
+import { toast } from "@/components/ui/toast";
 
 export default function GameAddForm() {
   const add = useGameStore((s) => s.add);
@@ -60,7 +61,12 @@ export default function GameAddForm() {
         },
         status,
       });
-      if (ok) handleClearSelection();
+      if (ok) {
+        handleClearSelection();
+        toast.add({ type: "success", title: "Game added to library" });
+      } else {
+        toast.add({ type: "error", title: "Failed to add game" });
+      }
     } finally {
       setIsAdding(false);
     }

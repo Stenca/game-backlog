@@ -5,6 +5,7 @@ import type { JournalEntry } from "../types/Game";
 import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
 import JournalEntryEditForm from "./JournalEntryEditForm";
 import JournalEntryView from "./JournalEntryView";
+import { toast } from "@/components/ui/toast";
 
 type Props = {
   entry: JournalEntry;
@@ -43,8 +44,12 @@ export default function JournalEntryItem({ entry }: Props) {
     setSaving(true);
     try {
       const ok = await updateEntry(entry._id, entry.gameId, formData);
-      if (!ok) setError("Failed to update entry");
-      else setEditingId(null);
+      if (ok) {
+        setEditingId(null);
+        toast.add({ type: "success", title: "Entry updated" });
+      } else {
+        toast.add({ type: "error", title: "Failed to update entry" });
+      }
     } finally {
       setSaving(false);
     }
@@ -54,8 +59,12 @@ export default function JournalEntryItem({ entry }: Props) {
     setDeleting(true);
     try {
       const ok = await removeEntry(entry._id, entry.gameId);
-      if (ok) setConfirmOpen(false);
-      else setError("Failed to delete entry");
+      if (ok) {
+        setConfirmOpen(false);
+        toast.add({ type: "success", title: "Entry deleted" });
+      } else {
+        toast.add({ type: "error", title: "Failed to delete entry" });
+      }
     } finally {
       setDeleting(false);
     }

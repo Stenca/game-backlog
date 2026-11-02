@@ -4,7 +4,7 @@ import { apiFetch } from "../api";
 import { useAuthStore, type User } from "../stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import StatusMessage from "@/components/StatusMessage";
+import { toast } from "@/components/ui/toast";
 
 export default function Profile() {
   const user = useAuthStore((s) => s.user);
@@ -15,14 +15,10 @@ export default function Profile() {
   const [username, setUsername] = useState(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
-  const [profileError, setProfileError] = useState("");
-  const [profileSuccess, setProfileSuccess] = useState("");
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const updateProfileMutation = useMutation({
     mutationFn: (payload: Record<string, string>) =>
@@ -33,12 +29,18 @@ export default function Profile() {
     onSuccess: (data) => {
       login(token!, data.user);
       queryClient.setQueryData(["profile"], data.user);
-      setProfileSuccess("Profile updated.");
-      setProfileError("");
+      toast.add({
+        type: "success",
+        title: "Profile updated",
+        description: "Your account details have been saved.",
+      });
     },
     onError: (err) => {
-      setProfileError(err instanceof Error ? err.message : "Update failed");
-      setProfileSuccess("");
+      toast.add({
+        type: "error",
+        title: "Failed to update profile",
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
     },
   });
 
@@ -49,19 +51,25 @@ export default function Profile() {
         body: JSON.stringify(payload),
       }),
     onSuccess: () => {
-      setPasswordSuccess("Password updated.");
-      setPasswordError("");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      toast.add({
+        type: "success",
+        title: "Password updated",
+        description: "Your new password is now active.",
+      });
     },
     onError: (err) => {
-      setPasswordError(err instanceof Error ? err.message : "Update failed");
-      setPasswordSuccess("");
+      toast.add({
+        type: "error",
+        title: "Failed to update password",
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
     },
   });
 
-  function handleProfileSubmit(e: React.SubmitEvent) {
+  function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     const payload: Record<string, string> = {};
@@ -70,20 +78,26 @@ export default function Profile() {
     if (email !== user?.email) payload.email = email;
 
     if (Object.keys(payload).length === 0) {
-      setProfileSuccess("Nothing to update.");
-      setProfileError("");
+      toast.add({
+        type: "info",
+        title: "Nothing to update",
+        description: "You haven't changed any details.",
+      });
       return;
     }
 
     updateProfileMutation.mutate(payload);
   }
 
-  function handlePasswordSubmit(e: React.SubmitEvent) {
+  function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
-      setPasswordSuccess("");
+      toast.add({
+        type: "error",
+        title: "Passwords do not match",
+        description: "Please re-enter your new password.",
+      });
       return;
     }
 
@@ -107,14 +121,11 @@ export default function Profile() {
             <span className="text-xs uppercase tracking-wide text-ink-muted">
               Username
             </span>
-            {/* Removed bg-surface-2 so it uses the default Input styles */}
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              className="bg-surface-2"
             />
-            <span className="text-[11px] text-ink-dim">
-              Lowercase, 3–20 characters. Used for login. Must be unique.
-            </span>
           </label>
 
           <label className="flex flex-col gap-1">
@@ -124,10 +135,8 @@ export default function Profile() {
             <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              className="bg-surface-2"
             />
-            <span className="text-[11px] text-ink-dim">
-              What other users see. 1–20 characters.
-            </span>
           </label>
 
           <label className="flex flex-col gap-1">
@@ -138,15 +147,11 @@ export default function Profile() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="bg-surface-2"
             />
           </label>
 
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <div className="min-h-9 min-w-0 flex-1">
-              <StatusMessage message={profileError} variant="error" />
-              <StatusMessage message={profileSuccess} variant="success" />
-            </div>
-
+          <div className="mt-2 flex justify-end">
             <Button
               type="submit"
               isLoading={updateProfileMutation.isPending}
@@ -175,6 +180,7 @@ export default function Profile() {
               onChange={(e) => setCurrentPassword(e.target.value)}
               autoComplete="current-password"
               required
+              className="bg-surface-2"
             />
           </label>
 
@@ -189,6 +195,7 @@ export default function Profile() {
               autoComplete="new-password"
               required
               minLength={8}
+              className="bg-surface-2"
             />
           </label>
 
@@ -202,15 +209,11 @@ export default function Profile() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
               required
+              className="bg-surface-2"
             />
           </label>
 
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <div className="min-h-9 min-w-0 flex-1">
-              <StatusMessage message={passwordError} variant="error" />
-              <StatusMessage message={passwordSuccess} variant="success" />
-            </div>
-
+          <div className="mt-2 flex justify-end">
             <Button
               type="submit"
               isLoading={updatePasswordMutation.isPending}

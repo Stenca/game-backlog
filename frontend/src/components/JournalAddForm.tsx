@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useJournalStore } from "../stores/journalStore";
 import FileUpload from "./FileUpload";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 
 type Props = {
   gameId: string;
@@ -13,7 +14,6 @@ export default function JournalAddForm({ gameId }: Props) {
   const [newEntry, setNewEntry] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const [uploadError, setUploadError] = useState("");
 
   const addEntry = useJournalStore((s) => s.addEntry);
@@ -43,7 +43,6 @@ export default function JournalAddForm({ gameId }: Props) {
     if (!newEntry.trim() && imageFiles.length === 0) return;
 
     setSubmitting(true);
-    setError("");
 
     const formData = new FormData();
     formData.append("gameId", gameId);
@@ -52,12 +51,22 @@ export default function JournalAddForm({ gameId }: Props) {
 
     try {
       const ok = await addEntry(gameId, formData);
+
       if (!ok) {
-        setError("Failed to add entry. Please try again.");
+        toast.add({
+          type: "error",
+          title: "Failed to add entry",
+          description: "Please check your connection and try again.",
+        });
       } else {
         setNewEntry("");
         setImageFiles([]);
         setUploadError("");
+
+        toast.add({
+          type: "success",
+          title: "Entry posted",
+        });
       }
     } finally {
       setSubmitting(false);
@@ -84,8 +93,6 @@ export default function JournalAddForm({ gameId }: Props) {
         rows={3}
         className="w-full resize-none bg-transparent text-sm text-ink placeholder:text-ink-dim focus:outline-none"
       />
-
-      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
       <div className="mt-3 flex flex-col gap-3 border-t border-border/50 pt-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="w-full min-w-0 flex-1">

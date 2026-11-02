@@ -63,10 +63,10 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
     onClear();
   }
 
-  const isQueryValid = query.trim().length >= 2;
+  const hasValidSearch = debouncedQuery.trim().length >= 2;
 
   const showDropdown =
-    open && isQueryValid && (results.length > 0 || isError || !isFetching);
+    open && hasValidSearch && (results.length > 0 || isError || !isFetching);
 
   return (
     <div ref={wrapperRef} className="relative z-30">
