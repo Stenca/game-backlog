@@ -6,8 +6,9 @@ import Landing from "./routes/Landing";
 import Login from "./routes/Login";
 import Profile from "./routes/Profile";
 import Register from "./routes/Register";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
+import NotFound from "@/routes/NotFound";
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
           <Route path="/games" element={<Games />} />
           <Route path="/games/:id" element={<GameDetail />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
     </div>

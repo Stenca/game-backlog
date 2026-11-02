@@ -1,10 +1,11 @@
-import { useJournalStore } from "../stores/journalStore";
+// In Journal.tsx
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "../api";
+import type { JournalEntry } from "../types/Game";
+import Loading from "@/components/Loading";
 import JournalAddForm from "./JournalAddForm";
 import JournalEntryItem from "./JournalEntryItem";
-import Loading from "@/components/Loading";
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/api";
-import type { JournalEntry } from "@/types/Game";
+import ErrorState from "./ErrorState";
 
 type Props = {
   gameId: string;
@@ -12,41 +13,45 @@ type Props = {
 };
 
 export default function Journal({ gameId, userGameId }: Props) {
-  const editingId = useJournalStore((s) => s.editingId);
-
   const {
     data: entries = [],
     isLoading,
     error,
+    refetch,
   } = useQuery({
-    queryKey: ["journal", gameId],
+    queryKey: ["journal", userGameId],
     queryFn: () => apiFetch<JournalEntry[]>(`/api/journal/game/${userGameId}`),
-    enabled: !!userGameId,
   });
 
-  if (isLoading) return <Loading text="Loading journal..." />;
-  if (error)
-    return (
-      <p className="text-sm text-destructive">{(error as Error).message}</p>
-    );
-
   return (
-    <section className="mt-10 border-t border-border pt-8">
-      <h2 className="mb-4 text-xl font-semibold text-ink">Journal</h2>
+    <div className="mt-12">
+      <h2 className="mb-4 text-xl font-bold tracking-tight text-ink">
+        Journal
+      </h2>
 
-      <JournalAddForm key={editingId || "new"} gameId={gameId} />
+      <JournalAddForm gameId={gameId} />
 
-      {entries.length === 0 ? (
-        <p className="mt-8 text-center text-sm text-ink-muted">
-          No entries yet. Write your first note above.
+      {isLoading ? (
+        <Loading text="Loading journal..." />
+      ) : error ? (
+        <div className="mt-6">
+          <ErrorState
+            title="Failed to load journal"
+            message={error.message}
+            onRetry={() => refetch()}
+          />
+        </div>
+      ) : entries.length === 0 ? (
+        <p className="mt-6 text-sm text-ink-muted">
+          No entries yet. Write your first one above!
         </p>
       ) : (
-        <ul className="mt-8 flex flex-col gap-4">
+        <ul className="mt-6 flex flex-col gap-4">
           {entries.map((entry) => (
             <JournalEntryItem key={entry._id} entry={entry} />
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }

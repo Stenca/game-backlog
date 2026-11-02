@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "motion/react"; // Add this import
+import { motion, AnimatePresence } from "motion/react";
 import { apiFetch } from "../api";
 import type { SearchResult } from "../types/Game";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,18 +19,6 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!open) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setOpen(false);
-        if (wrapperRef.current) {
-          const input = wrapperRef.current.querySelector("input");
-          input?.blur();
-        }
-      }
-    }
-
     function handleClickOutside(e: MouseEvent) {
       if (
         wrapperRef.current &&
@@ -39,22 +27,20 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
         setOpen(false);
       }
     }
-
-    document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  const { data: results = [], isFetching } = useQuery({
+  const {
+    data: results = [],
+    isFetching,
+    isError,
+  } = useQuery({
     queryKey: ["gameSearch", debouncedQuery],
     queryFn: () =>
       apiFetch<SearchResult[]>(
@@ -77,6 +63,10 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
     onClear();
   }
 
+  const showDropdown =
+    open &&
+    (results.length > 0 || isError || (query.length >= 2 && !isFetching));
+
   return (
     <div ref={wrapperRef} className="relative z-30">
       <SearchBar
@@ -87,7 +77,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
           if (selected) onClear();
         }}
         onFocus={() => {
-          if (!selected && results.length > 0) {
+          if (!selected && (results.length > 0 || isError)) {
             setOpen(true);
           }
         }}
@@ -98,43 +88,53 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
       />
 
       <AnimatePresence>
-        {open && results.length > 0 && (
+        {showDropdown && (
           <motion.div
             initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute z-50 mt-1 w-full overflow-hidden rounded border border-border bg-surface/90 backdrop-blur-md shadow-lg origin-top"
+            className="absolute z-50 mt-1 w-full overflow-hidden rounded border border-border bg-surface/80 backdrop-blur-md shadow-lg origin-top"
           >
-            <ScrollArea className="h-100">
-              <ul>
-                {results.map((r) => (
-                  <li
-                    key={r.rawgId}
-                    onClick={() => handlePick(r)}
-                    className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
-                  >
-                    {r.coverUrl && (
-                      <img
-                        src={r.coverUrl}
-                        alt=""
-                        className="h-16 w-12 shrink-0 rounded object-cover"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-ink group-hover:text-brand">
-                        {r.title}
-                      </div>
-                      {r.released && (
-                        <div className="text-xs text-ink-muted">
-                          {r.released.slice(0, 4)}
-                        </div>
+            {isError ? (
+              <div className="p-4 text-center text-sm text-destructive">
+                Failed to search games. Please try again.
+              </div>
+            ) : results.length > 0 ? (
+              <ScrollArea className="h-100">
+                <ul>
+                  {results.map((r) => (
+                    <li
+                      key={r.rawgId}
+                      onClick={() => handlePick(r)}
+                      className="group flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-surface-2"
+                    >
+                      {r.coverUrl && (
+                        <img
+                          src={r.coverUrl}
+                          alt=""
+                          className="h-16 w-12 shrink-0 rounded object-cover"
+                        />
                       )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </ScrollArea>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium text-ink group-hover:text-brand">
+                          {r.title}
+                        </div>
+                        {r.released && (
+                          <div className="text-xs text-ink-muted">
+                            {r.released.slice(0, 4)}
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            ) : (
+              <div className="p-4 text-center text-sm text-ink-muted">
+                No games found for "{query}".
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

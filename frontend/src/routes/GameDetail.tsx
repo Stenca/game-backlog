@@ -14,6 +14,7 @@ import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/GameTimeline";
 import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
+import ErrorState from "@/components/ErrorState";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +31,7 @@ export default function GameDetail() {
     data: game,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["game", id],
     queryFn: () => apiFetch<UserGame>(`/api/games/${id}`),
@@ -110,13 +112,17 @@ export default function GameDetail() {
   if (error && !game) {
     return (
       <main className="mx-auto max-w-5xl px-6 py-8">
-        <p className="text-sm text-ink-muted">{error.message}</p>
         <Link
           to="/games"
-          className="mt-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover"
+          className="mb-6 inline-block text-sm text-brand transition-colors hover:text-brand-hover"
         >
           ← Back to games
         </Link>
+        <ErrorState
+          title="Failed to load game"
+          message={error.message}
+          onRetry={() => refetch()}
+        />
       </main>
     );
   }
@@ -235,7 +241,7 @@ export default function GameDetail() {
                 }}
                 placeholder="What did you think of this game?"
                 readOnly={!isEditing || confirmingDelete}
-                className={`block min-h-40 w-full flex-1 resize-none rounded border px-4 py-3 pb-12 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+                className={`block min-h-40 w-full flex-1 resize-none rounded border px-4 py-3 pb-12 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none ${
                   isEditing
                     ? "border-border bg-surface shadow-inner focus:border-brand focus:ring-2 focus:ring-brand/20"
                     : "cursor-pointer border-transparent bg-surface hover:border-brand focus:border-transparent focus:ring-0 text-ink-muted"
@@ -286,12 +292,6 @@ export default function GameDetail() {
               )}
             </div>
           </div>
-
-          {error && (
-            <p className="mt-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
-              {error.message}
-            </p>
-          )}
         </div>
       </div>
 

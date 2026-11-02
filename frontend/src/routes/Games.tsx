@@ -8,8 +8,9 @@ import FilterSelect from "@/components/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
 import GameAddForm from "../components/GameAddForm";
 import { SearchBar } from "../components/SearchBar";
-import { Button } from "@/components/ui/button"; // <-- Added import
+import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
+import ErrorState from "@/components/ErrorState";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -22,6 +23,7 @@ export default function Games() {
     data: games = [],
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["games"],
     queryFn: () => apiFetch<UserGame[]>("/api/games"),
@@ -87,14 +89,14 @@ export default function Games() {
 
         <GameAddForm />
 
-        {error && (
-          <p className="mb-4 rounded border border-red-900 bg-red-950/40 px-3 py-2 text-sm text-destructive">
-            {error.message}
-          </p>
-        )}
-
         {isLoading ? (
           <Loading text="Loading your library" />
+        ) : error ? (
+          <ErrorState
+            title="Failed to load your library"
+            message={error.message}
+            onRetry={() => refetch()}
+          />
         ) : (
           <>
             <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-border pb-4">

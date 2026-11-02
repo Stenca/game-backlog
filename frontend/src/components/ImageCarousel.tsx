@@ -35,10 +35,9 @@ export default function ImageCarousel({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-bg/95 backdrop-blur-md"
+      className="fixed inset-0 z-100 flex flex-col bg-bg/95 backdrop-blur-md"
       onClick={onClose}
     >
-      {/* Header area for Close Button */}
       <div className="flex w-full items-center justify-end p-4">
         <button
           onClick={onClose}
@@ -48,9 +47,7 @@ export default function ImageCarousel({
         </button>
       </div>
 
-      {/* Carousel Area */}
       <div className="relative flex flex-1 items-center justify-center overflow-hidden">
-        {/* Left Arrow */}
         {images.length > 1 && (
           <button
             onClick={(e) => {
@@ -86,7 +83,6 @@ export default function ImageCarousel({
           </CarouselContent>
         </Carousel>
 
-        {/* Right Arrow */}
         {images.length > 1 && (
           <button
             onClick={(e) => {
