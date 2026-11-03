@@ -11,33 +11,41 @@ export default function Logo({ size = "sm", tagline, className = "" }: Props) {
   const isLg = size === "lg";
 
   const content = (
-    <div className={`flex items-center ${className}`}>
-      <img
-        src={bonfireImg}
-        alt="Bonfire"
-        className={`shrink-0 object-contain ${isLg ? "h-15 w-13" : "h-7 w-7"}`}
-      />
-
-      <div className={`flex items-baseline ${isLg ? "gap-4" : "gap-2"}`}>
+    <div
+      className={`flex ${
+        isLg
+          ? "flex-col items-center gap-1 sm:flex-row sm:items-baseline sm:gap-4"
+          : "items-center"
+      } ${className}`}
+    >
+      <div className="flex items-center">
+        <img
+          src={bonfireImg}
+          alt="Bonfire"
+          className={`shrink-0 object-contain ${
+            isLg ? "h-8 w-8 sm:h-12 sm:w-12" : "h-7 w-7"
+          }`}
+        />
         <span
-          className={`font-pirata tracking-wide text-ink ${
-            isLg ? "text-7xl -ml-2" : "text-lg -ml-1"
+          className={`font-pirata text-ink ${
+            isLg ? "text-4xl sm:text-6xl -ml-1 sm:-ml-2" : "text-2xl -ml-0.5"
           }`}
         >
-          <span className="text-brand">bon</span>fire
-          <span className="text-brand">.</span>
+          <span className="text-brand tracking-wide">bon</span>
+          <span className="tracking-wide">fire</span>
+          <span className="text-brand tracking-normal">.</span>
         </span>
-
-        {tagline && (
-          <span
-            className={`text-ink-muted ${
-              isLg ? "text-lg hidden sm:block" : "text-sm hidden md:block"
-            }`}
-          >
-            {tagline}
-          </span>
-        )}
       </div>
+
+      {tagline && (
+        <span
+          className={`text-ink-muted ${
+            isLg ? "text-sm sm:text-lg" : "text-xs hidden md:block"
+          }`}
+        >
+          {tagline}
+        </span>
+      )}
     </div>
   );
 

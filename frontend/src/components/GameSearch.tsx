@@ -5,6 +5,7 @@ import { apiFetch } from "../api";
 import type { SearchResult } from "../types/Game";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchBar } from "./SearchBar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {
   onSelect: (result: SearchResult) => void;
@@ -47,7 +48,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
         `/api/games/search?q=${encodeURIComponent(debouncedQuery)}`,
       ),
     enabled: debouncedQuery.trim().length >= 2 && !selected,
-    placeholderData: (previousData) => previousData,
+    retry: 1,
   });
 
   function handlePick(result: SearchResult) {
@@ -64,9 +65,8 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
   }
 
   const hasValidSearch = debouncedQuery.trim().length >= 2;
-
   const showDropdown =
-    open && hasValidSearch && (results.length > 0 || isError || !isFetching);
+    open && hasValidSearch && (results.length > 0 || isError || isFetching);
 
   return (
     <div ref={wrapperRef} className="relative z-30">
@@ -83,7 +83,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
           }
         }}
         placeholder="Search a game to add..."
-        isFetching={isFetching}
+        isFetching={false}
         selected={!!selected}
         onClear={handleClear}
       />
@@ -95,14 +95,26 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute z-50 mt-1 w-full overflow-hidden rounded border border-border bg-surface/80 backdrop-blur-md shadow-lg origin-top"
+            className="absolute z-50 mt-1 w-full overflow-hidden rounded border border-border bg-surface shadow-lg origin-top"
           >
             {isError ? (
               <div className="p-4 text-center text-sm text-destructive">
-                Failed to search games. Please try again.
+                Failed to fetch games.
               </div>
-            ) : results.length > 0 ? (
-              <ScrollArea className="h-100">
+            ) : isFetching ? (
+              <div className="flex flex-col gap-1 p-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2">
+                    <Skeleton className="h-16 w-12 shrink-0 rounded" />
+                    <div className="flex w-full flex-col gap-2">
+                      <Skeleton className="h-4 w-3/4 rounded" />
+                      <Skeleton className="h-3 w-1/4 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <ScrollArea className="h-75">
                 <ul>
                   {results.map((r) => (
                     <li
@@ -131,10 +143,6 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
                   ))}
                 </ul>
               </ScrollArea>
-            ) : (
-              <div className="p-4 text-center text-sm text-ink-muted">
-                No games found for "{query}".
-              </div>
             )}
           </motion.div>
         )}

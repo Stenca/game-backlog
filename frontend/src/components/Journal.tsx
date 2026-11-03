@@ -1,10 +1,9 @@
-// In Journal.tsx
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import type { JournalEntry } from "../types/Game";
-import Loading from "@/components/Loading";
 import JournalAddForm from "./JournalAddForm";
 import JournalEntryItem from "./JournalEntryItem";
+import JournalSkeleton from "./JournalSkeleton";
 import ErrorState from "./ErrorState";
 
 type Props = {
@@ -32,7 +31,7 @@ export default function Journal({ gameId, userGameId }: Props) {
       <JournalAddForm gameId={gameId} />
 
       {isLoading ? (
-        <Loading text="Loading journal..." />
+        <JournalSkeleton />
       ) : error ? (
         <div className="mt-6">
           <ErrorState

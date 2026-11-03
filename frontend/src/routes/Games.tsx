@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import GameCard from "../components/GameCard";
-import Loading from "@/components/Loading";
+import GameCardSkeleton from "../components/GameCardSkeleton";
 import { sortGames, STATUS_ORDER } from "@/utils/status";
 import FilterSelect from "@/components/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
@@ -74,100 +74,106 @@ export default function Games() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-5">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mb-6 flex flex-col items-center text-center sm:mb-8 sm:items-start sm:text-left">
           <Logo
             size="lg"
             tagline="Your journey, remembered."
-            className="mb-4"
+            className="mb-2 sm:mb-4 sm:scale-100"
           />
-
-          <p className="text-base">
+          <p className="text-sm text-ink sm:text-base">
             Track your games and take notes of your progress.
           </p>
         </div>
 
         <GameAddForm />
 
+        <div className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:gap-2">
+          <div className="order-2 w-full sm:order-1 sm:w-64">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search your library..."
+              showClear={searchQuery.length > 0}
+              onClear={() => setSearchQuery("")}
+            />
+          </div>
+
+          <div className="order-1 flex w-full gap-2 sm:order-2 sm:w-auto">
+            <div className="flex-1 sm:flex-none">
+              <FilterSelect
+                value={filter}
+                onValueChange={(val) => setFilter(val as Status | "all")}
+                options={statusOptions}
+                placeholder="All Games"
+              />
+            </div>
+            <div className="flex-1 sm:flex-none">
+              <FilterSelect
+                value={platformFilter}
+                onValueChange={(val) => setPlatformFilter(val ?? "all")}
+                options={platformOptions}
+                placeholder="All Platforms"
+              />
+            </div>
+          </div>
+        </div>
+
         {isLoading ? (
-          <Loading text="Loading your library" />
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <li key={i}>
+                <GameCardSkeleton />
+              </li>
+            ))}
+          </ul>
         ) : error ? (
           <ErrorState
             title="Failed to load your library"
             message={error.message}
             onRetry={() => refetch()}
           />
+        ) : filteredGames.length === 0 ? (
+          <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
+            <p className="text-base text-ink">
+              {games.length === 0 ? "No games yet." : "No games found."}
+            </p>
+            <p className="mt-1 text-sm text-ink-muted">
+              {games.length === 0
+                ? "Search above to add your first one."
+                : "Try changing your filters or search query."}
+            </p>
+          </div>
         ) : (
-          <>
-            <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-border pb-4">
-              <div className="w-full sm:w-64">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Search your library..."
-                  showClear={searchQuery.length > 0}
-                  onClear={() => setSearchQuery("")}
-                />
-              </div>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {paginatedGames.map((g, i) => (
+              <GameCard key={g._id} game={g} index={i} />
+            ))}
+          </ul>
+        )}
 
-              <FilterSelect
-                value={filter}
-                onValueChange={(val) => setFilter(val as Status | "all")}
-                options={statusOptions}
-                placeholder="Filter by status"
-              />
-
-              <FilterSelect
-                value={platformFilter}
-                onValueChange={(val) => setPlatformFilter(val ?? "all")}
-                options={platformOptions}
-                placeholder="Filter by platform"
-              />
-            </div>
-
-            {filteredGames.length === 0 ? (
-              <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
-                <p className="text-base text-ink">
-                  {games.length === 0 ? "No games yet." : "No games found."}
-                </p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  {games.length === 0
-                    ? "Search above to add your first one."
-                    : "Try changing your filters or search query."}
-                </p>
-              </div>
-            ) : (
-              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {paginatedGames.map((g, i) => (
-                  <GameCard key={g._id} game={g} index={i} />
-                ))}
-              </ul>
-            )}
-
-            {totalPages > 1 && (
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-ink-muted">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
+        {totalPages > 1 && !isLoading && !error && (
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-ink-muted">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         )}
       </main>
     </div>

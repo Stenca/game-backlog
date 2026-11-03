@@ -9,13 +9,13 @@ import GameCover from "../components/GameCover";
 import StatusMenu from "../components/StatusMenu";
 import PlatformBadge from "../components/PlatformBadge";
 import Journal from "../components/Journal";
-import Loading from "@/components/Loading";
 import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/GameTimeline";
 import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
 import ErrorState from "@/components/ErrorState";
 import { toast } from "@/components/ui/toast";
+import GameDetailSkeleton from "@/components/GameDetailSkeleton";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -129,11 +129,7 @@ export default function GameDetail() {
   }
 
   if (isLoading) {
-    return (
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        <Loading text="Loading game details…" fullScreen />
-      </main>
-    );
+    return <GameDetailSkeleton />;
   }
 
   if (error && !game) {
