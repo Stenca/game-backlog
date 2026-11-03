@@ -11,6 +11,8 @@ import { SearchBar } from "../components/SearchBar";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import ErrorState from "@/components/ErrorState";
+import bonfireImg from "../assets/bonfire.png";
+import { ArrowUp } from "lucide-react";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -74,50 +76,52 @@ export default function Games() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="mb-6 flex flex-col items-center text-center sm:mb-8 sm:items-start sm:text-left">
+      <main className="mx-auto max-w-5xl px-4 py-3 sm:px-6 sm:py-8">
+        <div className="mb-4 flex flex-col items-center text-center sm:mb-8 sm:items-start sm:text-left">
           <Logo
             size="lg"
             tagline="Your journey, remembered."
-            className="mb-2 sm:mb-4 sm:scale-100"
+            className="sm:mb-4"
           />
-          <p className="text-sm text-ink sm:text-base">
+          <p className="mt-3 text-sm text-ink-muted sm:mt-0 sm:text-base">
             Track your games and take notes of your progress.
           </p>
         </div>
 
         <GameAddForm />
 
-        <div className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:gap-2">
-          <div className="order-2 w-full sm:order-1 sm:w-64">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search your library..."
-              showClear={searchQuery.length > 0}
-              onClear={() => setSearchQuery("")}
-            />
-          </div>
+        {games.length > 0 && (
+          <div className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:gap-2">
+            <div className="order-2 w-full sm:order-1 sm:w-64">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search your library..."
+                showClear={searchQuery.length > 0}
+                onClear={() => setSearchQuery("")}
+              />
+            </div>
 
-          <div className="order-1 flex w-full gap-2 sm:order-2 sm:w-auto">
-            <div className="flex-1 sm:flex-none">
-              <FilterSelect
-                value={filter}
-                onValueChange={(val) => setFilter(val as Status | "all")}
-                options={statusOptions}
-                placeholder="All Games"
-              />
-            </div>
-            <div className="flex-1 sm:flex-none">
-              <FilterSelect
-                value={platformFilter}
-                onValueChange={(val) => setPlatformFilter(val ?? "all")}
-                options={platformOptions}
-                placeholder="All Platforms"
-              />
+            <div className="order-1 flex w-full gap-2 sm:order-2 sm:w-auto">
+              <div className="flex-1 sm:flex-none">
+                <FilterSelect
+                  value={filter}
+                  onValueChange={(val) => setFilter(val as Status | "all")}
+                  options={statusOptions}
+                  placeholder="All Games"
+                />
+              </div>
+              <div className="flex-1 sm:flex-none">
+                <FilterSelect
+                  value={platformFilter}
+                  onValueChange={(val) => setPlatformFilter(val ?? "all")}
+                  options={platformOptions}
+                  placeholder="All Platforms"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {isLoading ? (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
@@ -134,14 +138,28 @@ export default function Games() {
             onRetry={() => refetch()}
           />
         ) : filteredGames.length === 0 ? (
-          <div className="rounded border border-dashed border-border bg-surface/50 px-6 py-16 text-center">
-            <p className="text-base text-ink">
-              {games.length === 0 ? "No games yet." : "No games found."}
-            </p>
-            <p className="mt-1 text-sm text-ink-muted">
+          <div className="relative mt-24 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
+            {games.length === 0 && (
+              <div className="absolute -top-16 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-brand">
+                <ArrowUp className="h-8 w-8 animate-bounce" />
+                <span className="text-[10px] font-medium uppercase tracking-wider">
+                  Search above
+                </span>
+              </div>
+            )}
+
+            <img
+              src={bonfireImg}
+              alt=""
+              className="mb-6 h-20 w-20 object-contain opacity-40 grayscale"
+            />
+            <h3 className="text-xl font-bold tracking-tight text-ink">
+              {games.length === 0 ? "Your bonfire is empty" : "No games found"}
+            </h3>
+            <p className="mt-2 max-w-md text-sm text-ink-muted">
               {games.length === 0
-                ? "Search above to add your first one."
-                : "Try changing your filters or search query."}
+                ? "Search for a game above to start tracking your journey and lighting the fire."
+                : "Try changing your filters or search query to find what you're looking for."}
             </p>
           </div>
         ) : (
