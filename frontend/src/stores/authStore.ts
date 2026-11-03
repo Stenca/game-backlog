@@ -1,3 +1,4 @@
+import { queryClient } from "@/main";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -20,8 +21,13 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+
       login: (token, user) => set({ token, user }),
-      logout: () => set({ token: null, user: null }),
+
+      logout: () => {
+        set({ token: null, user: null });
+        queryClient.clear();
+      },
     }),
     {
       name: "auth-storage",
