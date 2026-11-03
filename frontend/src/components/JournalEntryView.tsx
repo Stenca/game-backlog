@@ -30,7 +30,7 @@ export default function JournalEntryView({ entry, onEdit, onDelete }: Props) {
           </span>
         </span>
 
-        <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100">
           <Button
             variant="ghost"
             size="sm"

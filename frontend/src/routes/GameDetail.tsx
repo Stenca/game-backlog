@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/GameTimeline";
 import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
 import ErrorState from "@/components/ErrorState";
-import { toast } from "@/components/ui/toast";
 import GameDetailSkeleton from "@/components/GameDetailSkeleton";
 
 export default function GameDetail() {
@@ -67,20 +66,7 @@ export default function GameDetail() {
 
   async function handleStatusChange(newStatus: Status) {
     if (!game) return;
-    const ok = await updateStatus(game._id, newStatus);
-
-    if (ok) {
-      toast.add({
-        type: "success",
-        title: "Status updated",
-        description: `Moved to ${newStatus}.`,
-      });
-    } else {
-      toast.add({
-        type: "error",
-        title: "Failed to update status",
-      });
-    }
+    await updateStatus(game._id, newStatus);
   }
 
   async function handleRatingChange(newRating: number) {
@@ -88,23 +74,15 @@ export default function GameDetail() {
     const previousRating = rating;
     setRating(newRating);
     const ok = await updateGame(game._id, { rating: newRating });
-    if (!ok) {
-      setRating(previousRating);
-      toast.add({ type: "error", title: "Failed to update rating" });
-    }
+    if (!ok) setRating(previousRating);
   }
 
   async function handleSaveReview() {
     if (!game) return;
     setSavingReview(true);
     try {
-      const ok = await updateGame(game._id, { review });
-      if (ok) {
-        setIsEditing(false);
-        toast.add({ type: "success", title: "Review saved" });
-      } else {
-        toast.add({ type: "error", title: "Failed to save review" });
-      }
+      await updateGame(game._id, { review });
+      setIsEditing(false);
     } finally {
       setSavingReview(false);
     }
@@ -114,23 +92,16 @@ export default function GameDetail() {
     if (!game) return;
     setSavingReview(true);
     try {
-      const ok = await updateGame(game._id, { review: "" });
-      if (ok) {
-        setReview("");
-        setIsEditing(false);
-        setConfirmingDelete(false);
-        toast.add({ type: "success", title: "Review deleted" });
-      } else {
-        toast.add({ type: "error", title: "Failed to delete review" });
-      }
+      await updateGame(game._id, { review: "" });
+      setReview("");
+      setIsEditing(false);
+      setConfirmingDelete(false);
     } finally {
       setSavingReview(false);
     }
   }
 
-  if (isLoading) {
-    return <GameDetailSkeleton />;
-  }
+  if (isLoading) return <GameDetailSkeleton />;
 
   if (error && !game) {
     return (
@@ -155,68 +126,75 @@ export default function GameDetail() {
   const hasReviewChanges = review !== (game.review ?? "");
 
   return (
-    <main className="relative mx-auto max-w-5xl px-6 py-8">
+    <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
       <div className="pointer-events-none absolute -top-10 -left-10 -z-10 h-125 w-125 rounded-full bg-brand/10 blur-[120px]" />
       <div className="pointer-events-none absolute top-1/3 -right-20 -z-10 h-100 w-100 rounded-full bg-brand/5 blur-[100px]" />
 
       <Link
         to="/games"
-        className="inline-block text-sm text-brand transition-colors hover:text-brand-hover"
+        className="mb-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover sm:mb-6"
       >
         ← Back to games
       </Link>
 
-      <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[224px_1fr]">
+      <div className="grid grid-cols-[100px_1fr] gap-4 sm:grid-cols-[150px_1fr] md:grid-cols-[224px_1fr] md:gap-8">
         <div className="flex flex-col gap-4">
           <GameCover game={game} showStatus={false} />
-
-          <div className="flex flex-1 flex-col justify-end rounded bg-surface p-3">
+          <div className="flex flex-1 flex-col justify-end rounded bg-surface p-2 sm:p-3">
             <GameTimeline game={game} />
           </div>
         </div>
 
-        <div className="flex flex-col">
-          <h1 className="mt-0 text-3xl leading-none font-bold tracking-tight text-ink">
-            {game.game.title}
-          </h1>
+        {/* 
+          This wrapper is normally the right column. 
+          On mobile, we use `contents` so its children flow into the parent grid.
+        */}
+        <div className="contents md:flex md:flex-col">
+          {/* Top Info (Title, Dev, Badges) - Right column on mobile, part of right col on desktop */}
+          <div className="flex flex-col">
+            <h1 className="mt-0 text-xl font-bold tracking-tight text-ink sm:text-3xl">
+              {game.game.title}
+            </h1>
 
-          <div className="mt-1 text-sm text-ink-muted">
-            {game.game.developers && game.game.developers.length > 0 && (
-              <p>
-                <span className="text-ink">by </span>
-                <span className="text-ink">
-                  {game.game.developers.join(", ")}
-                </span>
-              </p>
-            )}
+            <div className="mt-1 text-xs text-ink-muted sm:text-sm">
+              {game.game.developers && game.game.developers.length > 0 && (
+                <p>
+                  <span className="text-ink">by </span>
+                  <span className="text-ink">
+                    {game.game.developers.join(", ")}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted sm:text-sm">
+              {game.game.releaseDate && (
+                <span>{game.game.releaseDate.slice(0, 4)}</span>
+              )}
+              {game.game.genres && game.game.genres.length > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{game.game.genres.join(", ")}</span>
+                </>
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
+              <StatusMenu status={game.status} onChange={handleStatusChange} />
+              <PlatformBadge platform={game.platform} size="md" />
+            </div>
           </div>
 
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-muted">
-            {game.game.releaseDate && (
-              <span>{game.game.releaseDate.slice(0, 4)}</span>
-            )}
-            {game.game.genres && game.game.genres.length > 0 && (
-              <>
-                <span>•</span>
-                <span>{game.game.genres.join(", ")}</span>
-              </>
-            )}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <StatusMenu status={game.status} onChange={handleStatusChange} />
-            <PlatformBadge platform={game.platform} size="md" />
-          </div>
-
-          <div className="mt-6 flex flex-1 flex-col border-t border-border pt-4">
-            <h2 className="mb-3 text-base font-semibold text-ink">
+          {/* Review Section - Full width under grid on mobile, part of right col on desktop */}
+          <div className="col-span-2 mt-2 flex flex-col border-t border-border pt-4 md:col-span-1 md:mt-6 md:flex-1">
+            <h2 className="mb-3 text-sm font-semibold text-ink sm:text-base">
               Your rating and review
             </h2>
 
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <StarRating value={rating} onChange={handleRatingChange} />
-                <span className="text-sm text-ink-muted">
+                <span className="text-xs text-ink-muted sm:text-sm">
                   {rating > 0 ? `${rating}/5` : "Not rated"}
                 </span>
               </div>
@@ -227,7 +205,7 @@ export default function GameDetail() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="text-xs text-brand hover:text-brand-hover"
+                    className="h-6 px-2 text-xs text-brand hover:text-brand-hover"
                   >
                     Edit
                   </Button>
@@ -235,7 +213,7 @@ export default function GameDetail() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setConfirmingDelete(true)}
-                    className="text-xs text-destructive hover:text-destructive-hover"
+                    className="h-6 px-2 text-xs text-destructive hover:text-destructive-hover"
                   >
                     Delete
                   </Button>
@@ -264,7 +242,7 @@ export default function GameDetail() {
                 }}
                 placeholder="What did you think of this game?"
                 readOnly={!isEditing || confirmingDelete}
-                className={`block min-h-40 w-full flex-1 resize-none rounded border px-4 py-3 pb-12 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none ${
+                className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 pb-10 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none sm:min-h-40 sm:px-4 sm:py-3 sm:pb-12 ${
                   isEditing
                     ? "border-border bg-surface shadow-inner focus:border-brand focus:ring-2 focus:ring-brand/20"
                     : "cursor-pointer border-transparent bg-surface hover:border-brand focus:border-transparent focus:ring-0 text-ink-muted"
@@ -290,7 +268,7 @@ export default function GameDetail() {
               </AnimatePresence>
 
               {isEditing && !confirmingDelete && (
-                <div className="absolute right-3 bottom-3 flex gap-2">
+                <div className="absolute right-2 bottom-2 flex gap-2 sm:right-3 sm:bottom-3">
                   {game.review && (
                     <Button
                       variant="ghost"
