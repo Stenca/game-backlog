@@ -22,9 +22,12 @@ export function getStatusColor(status: Status): string {
 
 import type { UserGame } from "../types/Game";
 
-export function sortGames(games: UserGame[]): UserGame[] {
+export function sortGames(games: UserGame[]) {
   return [...games].sort((a, b) => {
-    const diff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
-    return diff !== 0 ? diff : a.game.title.localeCompare(b.game.title);
+    return (
+      STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
+      a.platform.name.localeCompare(b.platform.name) ||
+      a.game.title.localeCompare(b.game.title)
+    );
   });
 }
