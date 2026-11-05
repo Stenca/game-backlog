@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import GameCard from "../components/GameCard";
@@ -7,18 +7,18 @@ import { sortGames, STATUS_ORDER } from "@/utils/status";
 import FilterSelect from "@/components/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
 import GameAddForm from "../components/GameAddForm";
-import { SearchBar } from "../components/SearchBar";
-import { Button } from "@/components/ui/button";
+import { SearchBar } from "@/components/SearchBar";
 import Logo from "@/components/Logo";
 import ErrorState from "@/components/ErrorState";
 import bonfireImg from "../assets/bonfire.png";
 import { ArrowUp } from "lucide-react";
+import { usePagination } from "../hooks/usePagination";
+import Pagination from "../components/Pagination";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
   const PER_PAGE = 24;
 
   const {
@@ -44,15 +44,25 @@ export default function Games() {
 
   const sortedGames = sortGames(filteredGames);
 
-  const totalPages = Math.ceil(sortedGames.length / PER_PAGE);
-  const paginatedGames = sortedGames.slice(
-    (page - 1) * PER_PAGE,
-    page * PER_PAGE,
-  );
+  const { page, totalPages, paginatedItems, goToPage, resetPage } =
+    usePagination(sortedGames, PER_PAGE);
+
+  const pageTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setPage(1);
-  }, [games.length, filter, platformFilter, searchQuery]);
+    resetPage();
+  }, [filter, platformFilter, searchQuery, resetPage]);
+
+  const paginate = (pageNumber: number) => {
+    goToPage(pageNumber);
+    setTimeout(() => {
+      if (pageTopRef.current) {
+        const yOffset = pageTopRef.current.getBoundingClientRect().top;
+        const y = yOffset + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }, 10);
+  };
 
   const uniqueStatuses = Array.from(new Set(games.map((g) => g.status))).sort(
     (a, b) => STATUS_ORDER[a] - STATUS_ORDER[b],
@@ -123,76 +133,62 @@ export default function Games() {
           </div>
         )}
 
-        {isLoading ? (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <li key={i}>
-                <GameCardSkeleton />
-              </li>
-            ))}
-          </ul>
-        ) : error ? (
-          <ErrorState
-            title="Failed to load your library"
-            message={error.message}
-            onRetry={() => refetch()}
-          />
-        ) : filteredGames.length === 0 ? (
-          <div className="relative mt-24 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
-            {games.length === 0 && (
-              <div className="absolute -top-16 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-brand">
-                <ArrowUp className="h-8 w-8 animate-bounce" />
-                <span className="text-[10px] font-medium uppercase tracking-wider">
-                  Search above
-                </span>
-              </div>
-            )}
-
-            <img
-              src={bonfireImg}
-              alt=""
-              className="mb-6 h-20 w-20 object-contain opacity-40 grayscale"
+        <div ref={pageTopRef} className="scroll-mt-24">
+          {isLoading ? (
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <li key={i}>
+                  <GameCardSkeleton />
+                </li>
+              ))}
+            </ul>
+          ) : error ? (
+            <ErrorState
+              title="Failed to load your library"
+              message={error.message}
+              onRetry={() => refetch()}
             />
-            <h3 className="text-xl font-bold tracking-tight text-ink">
-              {games.length === 0 ? "Your bonfire is empty" : "No games found"}
-            </h3>
-            <p className="mt-2 max-w-md text-sm text-ink-muted">
-              {games.length === 0
-                ? "Search for a game above to start tracking your journey and lighting the fire."
-                : "Try changing your filters or search query to find what you're looking for."}
-            </p>
-          </div>
-        ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {paginatedGames.map((g, i) => (
-              <GameCard key={g._id} game={g} index={i} />
-            ))}
-          </ul>
-        )}
+          ) : filteredGames.length === 0 ? (
+            <div className="relative mt-24 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
+              {games.length === 0 && (
+                <div className="absolute -top-16 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-brand">
+                  <ArrowUp className="h-8 w-8 animate-bounce" />
+                  <span className="text-[10px] font-medium uppercase tracking-wider">
+                    Search above
+                  </span>
+                </div>
+              )}
 
-        {totalPages > 1 && !isLoading && !error && (
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-ink-muted">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+              <img
+                src={bonfireImg}
+                alt=""
+                className="mb-6 h-20 w-20 object-contain opacity-40 grayscale"
+              />
+              <h3 className="text-xl font-bold tracking-tight text-ink">
+                {games.length === 0
+                  ? "Your campfire is empty"
+                  : "No games found"}
+              </h3>
+              <p className="mt-2 max-w-md text-sm text-ink-muted">
+                {games.length === 0
+                  ? "Search for a game above to start tracking your journey and lighting the fire."
+                  : "Try changing your filters or search query to find what you're looking for."}
+              </p>
+            </div>
+          ) : (
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {paginatedItems.map((g, i) => (
+                <GameCard key={g._id} game={g} index={i} />
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={paginate}
+        />
       </main>
     </div>
   );
