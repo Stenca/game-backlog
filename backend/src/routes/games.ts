@@ -4,7 +4,7 @@ import { AuthedRequest, requireAuth } from "../middleware/requireAuth";
 import { validate } from "../middleware/validate";
 import { createGameSchema, updateGameSchema } from "../validators/games";
 import { UserGame } from "../models/UserGame";
-import { getGameDetails, searchGames } from "../services/rawg";
+import { searchGames, getGameDetails } from "../services/gameApi";
 import { searchLimiter } from "../middleware/rateLimit";
 
 const gamesRouter = Router();
@@ -35,7 +35,7 @@ gamesRouter.get("/details/:rawgId", async (req: AuthedRequest, res) => {
 
   const details = await getGameDetails(id);
   if (!details) {
-    res.status(404).json({ error: "Game not found on RAWG" });
+    res.status(404).json({ error: "Game not found on API" });
     return;
   }
 
@@ -81,22 +81,42 @@ gamesRouter.post(
       let game = await Game.findOne({ rawgId: req.body.rawgId });
 
       if (!game) {
-        const rawg = await getGameDetails(req.body.rawgId);
-        if (!rawg) {
-          res.status(404).json({ error: "Game not found on RAWG" });
+        const apiGame = await getGameDetails(req.body.rawgId);
+        if (!apiGame) {
+          res.status(404).json({ error: "Game not found on API" });
           return;
         }
-        game = await Game.create({
-          title: rawg.title,
-          titleLower: rawg.title.toLowerCase(),
-          rawgId: rawg.rawgId,
-          coverUrl: rawg.coverUrl,
-          releaseDate: rawg.releaseDate,
-          playtime: rawg.playtime,
-          genres: rawg.genres,
-          developers: rawg.developers,
-          availablePlatforms: rawg.availablePlatforms,
+
+        const existingGameByTitle = await Game.findOne({
+          titleLower: apiGame.title.toLowerCase(),
         });
+
+        if (existingGameByTitle) {
+          game = existingGameByTitle;
+        } else {
+          game = await Game.create({
+            title: apiGame.title,
+            titleLower: apiGame.title.toLowerCase(),
+            rawgId: apiGame.rawgId,
+            coverUrl: apiGame.coverUrl,
+            releaseDate: apiGame.releaseDate,
+            playtime: apiGame.playtime,
+            genres: apiGame.genres,
+            developers: apiGame.developers,
+            availablePlatforms: apiGame.availablePlatforms,
+          });
+        }
+      }
+
+      const existingUserGame = await UserGame.findOne({
+        userId: req.userId,
+        gameId: game._id,
+        "platform.name": req.body.platform.name,
+      });
+
+      if (existingUserGame) {
+        res.status(409).json({ error: "You already have this game" });
+        return;
       }
 
       const userGame = await UserGame.create({

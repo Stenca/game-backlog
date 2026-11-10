@@ -120,13 +120,13 @@ journalRouter.patch(
         entry.body = req.body.body.trim() || undefined;
       }
 
-      let keptUrls: string[] = [];
-      let keptPublicIds: string[] = [];
+      let keptUrls: string[] = entry.imageUrls || [];
+      let keptPublicIds: string[] = entry.imagePublicIds || [];
 
-      if (req.body.existingImages) {
+      if (req.body.existingImages !== undefined) {
         keptUrls = JSON.parse(req.body.existingImages);
       }
-      if (req.body.existingPublicIds) {
+      if (req.body.existingPublicIds !== undefined) {
         keptPublicIds = JSON.parse(req.body.existingPublicIds);
       }
 
@@ -143,6 +143,15 @@ journalRouter.patch(
             console.error(`[cloudinary/destroy] Failed for ${id}:`, err);
           }
         }
+
+        const indicesToRemove = keptPublicIds
+          .map((id, index) => (removedIds.includes(id) ? index : -1))
+          .filter((index) => index !== -1);
+
+        keptUrls = keptUrls.filter(
+          (_, index) => !indicesToRemove.includes(index),
+        );
+        keptPublicIds = keptPublicIds.filter((id) => !removedIds.includes(id));
       }
 
       if (files && files.length > 0) {

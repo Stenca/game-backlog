@@ -108,7 +108,7 @@ async function createEntryWithImage(token: string, gameId: string) {
     .set("Authorization", `Bearer ${token}`)
     .field("gameId", gameId)
     .field("body", "Screenshot of the boss fight")
-    .attach("image", Buffer.from("fake image data"), "test.jpg");
+    .attach("images", Buffer.from("fake image data"), "test.jpg");
 
   return res.body;
 }
@@ -170,7 +170,7 @@ describe("POST /api/journal", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.body).toBe("Just beat the first boss!");
-    expect(res.body.imageUrl).toBeUndefined();
+    expect(res.body.imageUrls).toEqual([]);
   });
 
   it("creates an image-only entry", async () => {
@@ -186,11 +186,13 @@ describe("POST /api/journal", () => {
       .post("/api/journal")
       .set("Authorization", `Bearer ${token}`)
       .field("gameId", gameId)
-      .attach("image", Buffer.from("fake image data"), "test.jpg");
+      .attach("images", Buffer.from("fake image data"), "test.jpg");
 
     expect(res.status).toBe(201);
-    expect(res.body.imageUrl).toBe("https://cloudinary.com/test-image.jpg");
-    expect(res.body.imagePublicId).toBe("bonfire-journals/test-id");
+    expect(res.body.imageUrls).toContain(
+      "https://cloudinary.com/test-image.jpg",
+    );
+    expect(res.body.imagePublicIds).toContain("bonfire-journals/test-id");
     expect(res.body.body).toBeUndefined();
   });
 
@@ -220,10 +222,10 @@ describe("PATCH /api/journal/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.body).toBe("Updated text");
-    expect(res.body.imageUrl).toBe(entry.imageUrl);
+    expect(res.body.imageUrls[0]).toBe(entry.imageUrls[0]);
   });
 
-  it("removes the image when removeImage=true", async () => {
+  it("removes an image when passing removedPublicIds", async () => {
     const token = await registerUser("user1", "u1@test.com");
     const { gameId } = await createUserGame(token);
     const entry = await createEntryWithImage(token, gameId);
@@ -232,12 +234,11 @@ describe("PATCH /api/journal/:id", () => {
       .patch(`/api/journal/${entry._id}`)
       .set("Authorization", `Bearer ${token}`)
       .field("body", "Text stays")
-      .field("removeImage", "true");
+      .field("removedPublicIds", JSON.stringify(["bonfire-journals/test-id"]));
 
     expect(res.status).toBe(200);
     expect(res.body.body).toBe("Text stays");
-    expect(res.body.imageUrl).toBeUndefined();
-    expect(res.body.imagePublicId).toBeUndefined();
+    expect(res.body.imageUrls).toEqual([]);
 
     expect(cloudinary.uploader.destroy).toHaveBeenCalledWith(
       "bonfire-journals/test-id",
@@ -254,7 +255,7 @@ describe("PATCH /api/journal/:id", () => {
       .patch(`/api/journal/${entry._id}`)
       .set("Authorization", `Bearer ${token}`)
       .field("body", "")
-      .field("removeImage", "true");
+      .field("removedPublicIds", JSON.stringify(["bonfire-journals/test-id"]));
 
     expect(res.status).toBe(204);
 
@@ -276,16 +277,13 @@ describe("PATCH /api/journal/:id", () => {
       .patch(`/api/journal/${entry._id}`)
       .set("Authorization", `Bearer ${token}`)
       .field("body", "Updated text")
-      .attach("image", Buffer.from("new fake image data"), "new.jpg");
+      .attach("images", Buffer.from("new fake image data"), "new.jpg");
 
     expect(res.status).toBe(200);
-    expect(res.body.imageUrl).toBe("https://cloudinary.com/new-image.jpg");
-    expect(res.body.imagePublicId).toBe("bonfire-journals/new-id");
-
-    expect(cloudinary.uploader.destroy).toHaveBeenCalledWith(
-      "bonfire-journals/test-id",
-      { invalidate: true, resource_type: "image" },
+    expect(res.body.imageUrls).toContain(
+      "https://cloudinary.com/new-image.jpg",
     );
+    expect(res.body.imagePublicIds).toContain("bonfire-journals/new-id");
   });
 });
 

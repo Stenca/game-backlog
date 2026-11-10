@@ -17,9 +17,15 @@ import authRouter from "../routes/auth.js";
 import { UserGame } from "../models/UserGame.js";
 import { Game } from "../models/Game.js";
 import * as rawgService from "../services/rawg.js";
+import * as igdbService from "../services/igdb.js";
 import { User } from "../models/User.js";
 
 vi.mock("../services/rawg.js", () => ({
+  searchGames: vi.fn(),
+  getGameDetails: vi.fn(),
+}));
+
+vi.mock("../services/igdb.js", () => ({
   searchGames: vi.fn(),
   getGameDetails: vi.fn(),
 }));
@@ -65,6 +71,22 @@ function mockRawgGame(rawgId: number, title: string) {
     coverUrl: "https://example.com/cover.jpg",
     releaseDate: new Date("2020-09-17"),
     playtime: 10,
+    genres: ["Action", "RPG"],
+    developers: ["Supergiant Games"],
+    availablePlatforms: [
+      { name: "PC", slug: "pc" },
+      { name: "Nintendo Switch", slug: "nintendo-switch" },
+    ],
+  });
+}
+
+function mockIgdbGame(igdbId: number, title: string) {
+  vi.mocked(igdbService.getGameDetails).mockResolvedValueOnce({
+    rawgId: igdbId,
+    title,
+    coverUrl: "https://example.com/cover.jpg",
+    releaseDate: new Date("2020-09-17"),
+    playtime: undefined,
     genres: ["Action", "RPG"],
     developers: ["Supergiant Games"],
     availablePlatforms: [
@@ -205,9 +227,10 @@ describe("POST /api/games", () => {
     expect(res.status).toBe(201);
   });
 
-  it("returns 404 when RAWG doesn't know the game", async () => {
+  it("returns 404 when the API doesn't know the game", async () => {
     const token = await registerUser("user1", "user1@test.com");
     vi.mocked(rawgService.getGameDetails).mockResolvedValueOnce(null);
+    vi.mocked(igdbService.getGameDetails).mockResolvedValueOnce(null);
 
     const res = await request(app)
       .post("/api/games")
@@ -215,7 +238,7 @@ describe("POST /api/games", () => {
       .send({ rawgId: 999999, platform: { name: "PC" }, status: "backlog" });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe("Game not found on RAWG");
+    expect(res.body.error).toBe("Game not found on API");
   });
 
   it("rejects invalid input", async () => {
@@ -227,6 +250,60 @@ describe("POST /api/games", () => {
       .send({ rawgId: -5, platform: { name: "PC" }, status: "nope" });
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/games (Fallback & Duplicates)", () => {
+  it("adds a game from IGDB if RAWG fails", async () => {
+    const token = await registerUser("user1", "user1@test.com");
+
+    vi.mocked(rawgService.getGameDetails).mockRejectedValueOnce(
+      new Error("RAWG down"),
+    );
+    mockIgdbGame(119133, "Elden Ring");
+
+    const res = await request(app)
+      .post("/api/games")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        rawgId: 119133,
+        platform: { name: "PC" },
+        status: "backlog",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.game.title).toBe("Elden Ring");
+
+    const catalog = await Game.findOne({ titleLower: "elden ring" });
+    expect(catalog).not.toBeNull();
+  });
+
+  it("prevents adding a game via IGDB if it exists via RAWG (Title Match)", async () => {
+    const token = await registerUser("user1", "user1@test.com");
+
+    mockRawgGame(326243, "Elden Ring");
+    await request(app)
+      .post("/api/games")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ rawgId: 326243, platform: { name: "PC" }, status: "backlog" });
+
+    vi.mocked(rawgService.getGameDetails).mockRejectedValueOnce(
+      new Error("RAWG down"),
+    );
+    mockIgdbGame(119133, "Elden Ring");
+
+    const res = await request(app)
+      .post("/api/games")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ rawgId: 119133, platform: { name: "PC" }, status: "playing" });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe("You already have this game");
+
+    const catalogCount = await Game.countDocuments({
+      titleLower: "elden ring",
+    });
+    expect(catalogCount).toBe(1);
   });
 });
 
@@ -359,10 +436,13 @@ describe("GET /api/games/search", () => {
     expect(res.body[0].title).toBe("Hades");
   });
 
-  it("returns 502 when RAWG fails", async () => {
+  it("returns 502 when both APIs fail", async () => {
     const token = await registerUser("user1", "user1@test.com");
     vi.mocked(rawgService.searchGames).mockRejectedValueOnce(
       new Error("RAWG down"),
+    );
+    vi.mocked(igdbService.searchGames).mockRejectedValueOnce(
+      new Error("IGDB down"),
     );
 
     const res = await request(app)
@@ -370,5 +450,29 @@ describe("GET /api/games/search", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(502);
+  });
+
+  it("falls back to IGDB if RAWG search fails", async () => {
+    const token = await registerUser("user1", "user1@test.com");
+    vi.mocked(rawgService.searchGames).mockRejectedValueOnce(
+      new Error("RAWG down"),
+    );
+    vi.mocked(igdbService.searchGames).mockResolvedValueOnce([
+      {
+        rawgId: 119133,
+        title: "Elden Ring",
+        coverUrl: "x",
+        released: "2022-02-25",
+      },
+    ]);
+
+    const res = await request(app)
+      .get("/api/games/search?q=elden")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].title).toBe("Elden Ring");
+    expect(vi.mocked(igdbService.searchGames)).toHaveBeenCalled();
   });
 });

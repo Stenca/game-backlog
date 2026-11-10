@@ -1,5 +1,5 @@
+import { cn } from "cn";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
 
 function Skeleton({
   className,
