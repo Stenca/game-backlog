@@ -21,7 +21,7 @@ function withTimeout<T>(
 
 export async function searchGames(query: string) {
   try {
-    const results = await withTimeout(rawg.searchGames(query), 3000, "RAWG");
+    const results = await withTimeout(rawg.searchGames(query), 1000, "RAWG");
     if (results && results.length > 0) return results;
   } catch (err) {
     console.warn("[API] RAWG failed or timed out. Falling back to IGDB.");
@@ -32,7 +32,7 @@ export async function searchGames(query: string) {
 
 export async function getGameDetails(id: number) {
   try {
-    const details = await withTimeout(rawg.getGameDetails(id), 3000, "RAWG");
+    const details = await withTimeout(rawg.getGameDetails(id), 1000, "RAWG");
     if (details) return details;
   } catch (err) {
     console.warn("[API] RAWG failed or timed out. Falling back to IGDB.");

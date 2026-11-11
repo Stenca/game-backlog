@@ -20,7 +20,7 @@ type UpdateGamePayload = {
 };
 
 type GameStore = {
-  add: (payload: AddGamePayload) => Promise<boolean>;
+  add: (payload: AddGamePayload) => Promise<UserGame>;
   updateGame: (id: string, payload: UpdateGamePayload) => Promise<boolean>;
   updateStatus: (id: string, status: Status) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
@@ -28,22 +28,17 @@ type GameStore = {
 
 export const useGameStore = create<GameStore>((_, get) => ({
   add: async (payload) => {
-    try {
-      const created = await apiFetch<UserGame>("/api/games", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+    const created = await apiFetch<UserGame>("/api/games", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
 
-      queryClient.setQueryData<UserGame[]>(["games"], (old = []) => [
-        created,
-        ...old,
-      ]);
+    queryClient.setQueryData<UserGame[]>(["games"], (old = []) => [
+      created,
+      ...old,
+    ]);
 
-      return true;
-    } catch (err) {
-      console.error("[gameStore/add]", err);
-      return false;
-    }
+    return created;
   },
 
   updateGame: async (id, payload) => {

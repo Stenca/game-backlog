@@ -52,7 +52,7 @@ export default function GameAddForm() {
 
     setIsAdding(true);
     try {
-      const ok = await add({
+      await add({
         rawgId: selected.rawgId,
         platform: {
           name: platform.name,
@@ -61,11 +61,24 @@ export default function GameAddForm() {
         },
         status,
       });
-      if (ok) {
-        handleClearSelection();
-        toast.add({ type: "success", title: "Game added to library" });
+
+      handleClearSelection();
+      toast.add({ type: "success", title: "Game added to library" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to add game";
+
+      if (message.toLowerCase().includes("already")) {
+        toast.add({
+          type: "error",
+          title: "Game already in library",
+          description: "You are already tracking this game.",
+        });
       } else {
-        toast.add({ type: "error", title: "Failed to add game" });
+        toast.add({
+          type: "error",
+          title: "Failed to add game",
+          description: message,
+        });
       }
     } finally {
       setIsAdding(false);
