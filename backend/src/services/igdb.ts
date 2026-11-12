@@ -1,12 +1,9 @@
+import { getPlatformAbbreviation } from "../utils/platforms";
+
 const CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 
 let cachedToken: string | null = null;
-
-function formatPlatformName(name: string) {
-  if (name === "PC (Microsoft Windows)") return "PC";
-  return name;
-}
 
 async function getTwitchToken() {
   if (cachedToken) return cachedToken;
@@ -97,10 +94,13 @@ export async function getGameDetails(rawgId: number) {
         ?.filter((c: any) => c.company)
         .map((c: any) => c.company.name) ?? [],
     availablePlatforms:
-      game.platforms?.map((p: any) => ({
-        name: formatPlatformName(p.name),
-        slug: formatPlatformName(p.name).toLowerCase().replace(/\s+/g, "-"),
-        releasedAt: undefined,
-      })) ?? [],
+      game.platforms?.map((p: any) => {
+        const abbreviated = getPlatformAbbreviation(p.name);
+        return {
+          name: abbreviated,
+          slug: abbreviated.toLowerCase().replace(/\s+/g, "-"),
+          releasedAt: undefined,
+        };
+      }) ?? [],
   };
 }
