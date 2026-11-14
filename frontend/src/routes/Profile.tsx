@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import { useAuthStore, type User } from "@/stores/authStore";
+import AvatarUpload from "@/components/common/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
@@ -108,7 +109,12 @@ export default function Profile() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-8">
       <h1 className="text-3xl font-bold tracking-tight text-ink">Profile</h1>
-
+      <section className="mt-8 rounded border border-border bg-surface p-6">
+        <h2 className="text-lg font-semibold text-ink">Avatar</h2>
+        <div className="mt-4">
+          <AvatarUpload />
+        </div>
+      </section>
       <section className="mt-8 rounded border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold text-ink">Account</h2>
 
