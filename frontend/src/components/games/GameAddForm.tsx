@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { apiFetch } from "../api";
-import { useGameStore } from "../stores/gameStore";
-import GameSearch from "./GameSearch";
-import FilterSelect from "./FilterSelect";
+import { apiFetch } from "@/api";
+import { useGameStore } from "@/stores/gameStore";
+import GameSearch from "@/components/games/GameSearch";
+import FilterSelect from "@/components/games/FilterSelect";
 import { Button } from "@/components/ui/button";
 import {
   STATUSES,
@@ -10,7 +10,7 @@ import {
   type Platform,
   type SearchResult,
   type Status,
-} from "../types/Game";
+} from "@/types/Game";
 import { toast } from "@/components/ui/toast";
 
 export default function GameAddForm() {

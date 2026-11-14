@@ -4,10 +4,14 @@ import { User } from "../models/User";
 import { updatePasswordSchema, updateProfileSchema } from "../validators/auth";
 import { validate } from "../middleware/validate";
 import { hashPassword, verifyPassword } from "../utils/auth";
+import multer from "multer";
+import cloudinary from "../utils/cloudinary";
 
 const usersRouter = Router();
 
 usersRouter.use(requireAuth);
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 usersRouter.get("/me", async (req: AuthedRequest, res) => {
   const user = await User.findById(req.userId).select("-passwordHash");
@@ -19,6 +23,7 @@ usersRouter.get("/me", async (req: AuthedRequest, res) => {
     user: {
       id: user.id,
       username: user.username,
+      avatarurl: user.avatarUrl,
       displayName: user.displayName,
       email: user.email,
     },
@@ -62,6 +67,7 @@ usersRouter.patch(
         user: {
           id: user.id,
           username: user.username,
+          avatarUrl: user.avatarUrl,
           displayName: user.displayName,
           email: user.email,
         },
@@ -105,6 +111,59 @@ usersRouter.patch(
     } catch (err) {
       console.error("[users/password]", err);
       res.status(500).json({ error: "Password update failed" });
+    }
+  },
+);
+
+usersRouter.patch(
+  "/me/avatar",
+  upload.single("avatar"),
+  async (req: AuthedRequest, res) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: "No image provided" });
+        return;
+      }
+
+      const user = await User.findById(req.userId);
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      if (user.avatarUrl) {
+        const publicId = user.avatarUrl.split("/").pop()?.split(".")[0];
+        if (publicId) {
+          try {
+            await cloudinary.uploader.destroy(`bonfire-avatars/${publicId}`);
+          } catch (err) {
+            console.error("[avatar/destroy] Failed to delete old avatar", err);
+          }
+        }
+      }
+
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: "bonfire-avatars",
+        transformation: { width: 200, height: 200, crop: "fill" },
+      });
+
+      user.avatarUrl = result.secure_url;
+      await user.save();
+
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+          displayName: user.displayName,
+          email: user.email,
+        },
+      });
+    } catch (err) {
+      console.error("[avatar/upload]", err);
+      res.status(500).json({ error: "Failed to upload avatar" });
     }
   },
 );

@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 export type User = {
   id: string;
   username: string;
+  avatarUrl?: string;
   displayName: string;
   email: string;
 };
@@ -14,6 +15,7 @@ type AuthState = {
   token: string | null;
   login: (token: string, user: User) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -28,7 +30,9 @@ export const useAuthStore = create<AuthState>()(
         set({ token: null, user: null });
         queryClient.clear();
       },
+      updateUser: (user: User) => set({ user }),
     }),
+
     {
       name: "auth-storage",
       partialize: (state) => ({ token: state.token, user: state.user }),

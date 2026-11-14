@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
-import { apiFetch } from "../api";
-import type { SearchResult } from "../types/Game";
+import { apiFetch } from "@/api";
+import type { SearchResult } from "@/types/Game";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SearchBar } from "./SearchBar";
+import { SearchBar } from "@/components/common/SearchBar";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Props = {

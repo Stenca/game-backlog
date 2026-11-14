@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
       maxlength: 20,
       match: /^[a-z0-9_]+$/,
     },
+    avatarUrl: { type: String, default: "" },
     displayName: {
       type: String,
       required: true,

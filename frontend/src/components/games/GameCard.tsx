@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { useGameStore } from "../stores/gameStore";
-import { type UserGame } from "../types/Game";
-import GameCover from "./GameCover";
-import PlatformBadge from "./PlatformBadge";
-import StatusMenu from "./StatusMenu";
-import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
+import { useGameStore } from "@/stores/gameStore";
+import { type UserGame } from "@/types/Game";
+import GameCover from "@/components/games/GameCover";
+import PlatformBadge from "@/components/games/PlatformBadge";
+import StatusMenu from "@/components/games/StatusMenu";
+import DeleteConfirmOverlay from "@/components/common/DeleteConfirmOverlay";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useState } from "react";

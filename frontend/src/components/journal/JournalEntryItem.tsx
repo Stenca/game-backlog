@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useJournalStore } from "../stores/journalStore";
-import type { JournalEntry } from "../types/Game";
-import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
+import { useJournalStore } from "../../stores/journalStore";
+import type { JournalEntry } from "../../types/Game";
+import DeleteConfirmOverlay from "../common/DeleteConfirmOverlay";
 import JournalEntryEditForm from "./JournalEntryEditForm";
 import JournalEntryView from "./JournalEntryView";
 import { toast } from "@/components/ui/toast";

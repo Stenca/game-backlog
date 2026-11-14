@@ -1,19 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
-import GameCard from "../components/GameCard";
-import GameCardSkeleton from "../components/GameCardSkeleton";
+import GameCard from "@/components/games/GameCard";
+import GameCardSkeleton from "../components/games/GameCardSkeleton";
 import { sortGames, STATUS_ORDER } from "@/utils/status";
-import FilterSelect from "@/components/FilterSelect";
+import FilterSelect from "@/components/games/FilterSelect";
 import { type Status, type UserGame } from "../types/Game";
-import GameAddForm from "../components/GameAddForm";
-import { SearchBar } from "@/components/SearchBar";
-import Logo from "@/components/Logo";
-import ErrorState from "@/components/ErrorState";
-import bonfireImg from "../assets/bonfire.png";
+import GameAddForm from "@/components/games/GameAddForm";
+import { SearchBar } from "@/components/common/SearchBar";
+import Logo from "@/components/layout/Logo";
+import ErrorState from "@/components/common/ErrorState";
+import bonfireImg from "@/assets/bonfire.png";
 import { ArrowUp } from "lucide-react";
 import { usePagination } from "../hooks/usePagination";
-import Pagination from "../components/Pagination";
+import Pagination from "@/components/common/Pagination";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");

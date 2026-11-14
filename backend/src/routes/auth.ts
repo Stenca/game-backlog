@@ -41,6 +41,7 @@ authRouter.post(
         user: {
           id: user.id,
           username: user.username,
+          avatarUrl: user.avatarUrl,
           displayName: user.displayName,
           email: user.email,
         },
@@ -86,6 +87,7 @@ authRouter.post(
         user: {
           id: user.id,
           username: user.username,
+          avatarUrl: user.avatarUrl,
           displayName: user.displayName,
           email: user.email,
         },

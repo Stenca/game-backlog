@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import bonfireImg from "../assets/bonfire.png";
+import bonfireImg from "../../assets/bonfire.png";
 
 type Props = {
   size?: "sm" | "lg";

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useJournalStore } from "../stores/journalStore";
-import FileUpload from "./FileUpload";
+import { useJournalStore } from "../../stores/journalStore";
+import FileUpload from "@/components/common/FileUpload";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 

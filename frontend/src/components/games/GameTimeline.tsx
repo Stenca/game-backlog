@@ -1,5 +1,5 @@
-import type { UserGame } from "../types/Game";
-import { formatEntryDate, formatRelative } from "../utils/date";
+import type { UserGame } from "@/types/Game";
+import { formatEntryDate, formatRelative } from "@/utils/date";
 
 type Props = {
   game: UserGame;

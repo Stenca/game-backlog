@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "../api";
-import type { JournalEntry } from "../types/Game";
-import JournalAddForm from "./JournalAddForm";
-import JournalEntryItem from "./JournalEntryItem";
-import JournalSkeleton from "./JournalSkeleton";
-import ErrorState from "./ErrorState";
+import { apiFetch } from "@/api";
+import type { JournalEntry } from "@/types/Game";
+import JournalAddForm from "@/components/journal/JournalAddForm";
+import JournalEntryItem from "@/components/journal/JournalEntryItem";
+import JournalSkeleton from "@/components/journal/JournalSkeleton";
+import ErrorState from "@/components/common/ErrorState";
 import { Button } from "@/components/ui/button";
 
 type Props = {

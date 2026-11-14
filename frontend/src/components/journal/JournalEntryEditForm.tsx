@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import FileUpload from "./FileUpload";
-import type { JournalEntry } from "../types/Game";
+import FileUpload from "@/components/common/FileUpload";
+import type { JournalEntry } from "@/types/Game";
 
 type Props = {
   entry: JournalEntry;

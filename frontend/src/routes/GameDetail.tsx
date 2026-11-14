@@ -5,16 +5,16 @@ import { motion, AnimatePresence } from "motion/react";
 import { type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
-import GameCover from "../components/GameCover";
-import StatusMenu from "../components/StatusMenu";
-import PlatformBadge from "../components/PlatformBadge";
-import Journal from "../components/Journal";
-import StarRating from "@/components/StarRating";
+import GameCover from "../components/games/GameCover";
+import StatusMenu from "../components/games/StatusMenu";
+import PlatformBadge from "../components/games/PlatformBadge";
+import Journal from "../components/journal/Journal";
+import StarRating from "@/components/games/StarRating";
 import { Button } from "@/components/ui/button";
-import GameTimeline from "@/components/GameTimeline";
-import DeleteConfirmOverlay from "@/components/DeleteConfirmOverlay";
-import ErrorState from "@/components/ErrorState";
-import GameDetailSkeleton from "@/components/GameDetailSkeleton";
+import GameTimeline from "@/components/games/GameTimeline";
+import DeleteConfirmOverlay from "@/components/common/DeleteConfirmOverlay";
+import ErrorState from "@/components/common/ErrorState";
+import GameDetailSkeleton from "@/components/games/GameDetailSkeleton";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();

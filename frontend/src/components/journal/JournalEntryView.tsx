@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from "motion/react";
-import type { JournalEntry } from "../types/Game";
+import type { JournalEntry } from "../../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import ImageCarousel from "./ImageCarousel";
+import ImageCarousel from "../common/ImageCarousel";
 
 type Props = {
   entry: JournalEntry;

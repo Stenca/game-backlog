@@ -1,5 +1,5 @@
-import type { Platform } from "../types/Game";
-import { getPlatformColor } from "../utils/platform";
+import type { Platform } from "@/types/Game";
+import { getPlatformColor } from "@/utils/platform";
 
 type Props = {
   platform: Platform;

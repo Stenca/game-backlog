@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../api";
-import { useAuthStore, type User } from "../stores/authStore";
+import { useAuthStore, type User } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
 
 export default function Profile() {
   const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
-  const token = useAuthStore((s) => s.token);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const queryClient = useQueryClient();
 
   const [username, setUsername] = useState(user?.username ?? "");
@@ -27,7 +26,7 @@ export default function Profile() {
         body: JSON.stringify(payload),
       }),
     onSuccess: (data) => {
-      login(token!, data.user);
+      updateUser(data.user);
       queryClient.setQueryData(["profile"], data.user);
       toast.add({
         type: "success",

@@ -1,5 +1,5 @@
-import type { UserGame } from "../types/Game";
-import { STATUS_COLOR } from "../utils/status";
+import type { UserGame } from "@/types/Game";
+import { STATUS_COLOR } from "@/utils/status";
 
 type Props = {
   game: UserGame;

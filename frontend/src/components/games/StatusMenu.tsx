@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { STATUSES, type Status } from "../types/Game";
-import { getStatusColor } from "../utils/status";
+import { STATUSES, type Status } from "@/types/Game";
+import { getStatusColor } from "@/utils/status";
 
 type Props = {
   status: Status;

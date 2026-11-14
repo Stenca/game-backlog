@@ -1,5 +1,5 @@
-import Header from "./components/Header";
-import ProtectedRoute from "./components/ProtectedRoute";
+import Header from "@/components/layout/Header";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import GameDetail from "./routes/GameDetail";
 import Games from "./routes/Games";
 import Landing from "./routes/Landing";
