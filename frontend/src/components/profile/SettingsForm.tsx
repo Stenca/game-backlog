@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiFetch } from "../api";
+import { useMutation } from "@tanstack/react-query";
+import { apiFetch } from "@/api";
 import { useAuthStore, type User } from "@/stores/authStore";
-import AvatarUpload from "@/components/common/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
+import AvatarUpload from "@/components/common/AvatarUpload";
 
-export default function Profile() {
+export default function SettingsForm() {
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
-  const queryClient = useQueryClient();
 
   const [username, setUsername] = useState(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
@@ -28,7 +27,6 @@ export default function Profile() {
       }),
     onSuccess: (data) => {
       updateUser(data.user);
-      queryClient.setQueryData(["profile"], data.user);
       toast.add({
         type: "success",
         title: "Profile updated",
@@ -107,15 +105,15 @@ export default function Profile() {
   if (!user) return null;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-8">
-      <h1 className="text-3xl font-bold tracking-tight text-ink">Profile</h1>
-      <section className="mt-8 rounded border border-border bg-surface p-6">
+    <div className="flex flex-col gap-6">
+      <section className="rounded border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold text-ink">Avatar</h2>
         <div className="mt-4">
           <AvatarUpload />
         </div>
       </section>
-      <section className="mt-8 rounded border border-border bg-surface p-6">
+
+      <section className="rounded border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold text-ink">Account</h2>
 
         <form
@@ -168,7 +166,7 @@ export default function Profile() {
         </form>
       </section>
 
-      <section className="mt-6 rounded border border-border bg-surface p-6">
+      <section className="rounded border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold text-ink">Change password</h2>
 
         <form
@@ -229,6 +227,6 @@ export default function Profile() {
           </div>
         </form>
       </section>
-    </main>
+    </div>
   );
 }

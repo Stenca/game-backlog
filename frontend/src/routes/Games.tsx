@@ -3,17 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../api";
 import GameCard from "@/components/games/GameCard";
 import GameCardSkeleton from "../components/games/GameCardSkeleton";
-import { sortGames, STATUS_ORDER } from "@/utils/status";
-import FilterSelect from "@/components/games/FilterSelect";
+import { sortGames } from "@/utils/status";
 import { type Status, type UserGame } from "../types/Game";
 import GameAddForm from "@/components/games/GameAddForm";
-import { SearchBar } from "@/components/common/SearchBar";
 import Logo from "@/components/layout/Logo";
 import ErrorState from "@/components/common/ErrorState";
 import bonfireImg from "@/assets/bonfire.png";
 import { ArrowUp } from "lucide-react";
 import { usePagination } from "../hooks/usePagination";
 import Pagination from "@/components/common/Pagination";
+import GameFilters from "@/components/games/GameFilters";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -64,26 +63,6 @@ export default function Games() {
     }, 10);
   };
 
-  const uniqueStatuses = Array.from(new Set(games.map((g) => g.status))).sort(
-    (a, b) => STATUS_ORDER[a] - STATUS_ORDER[b],
-  );
-  const statusOptions = [
-    { label: "All Games", value: "all" },
-    ...uniqueStatuses.map((s) => ({
-      label: s.charAt(0).toUpperCase() + s.slice(1),
-      value: s,
-    })),
-  ];
-
-  const uniquePlatforms = Array.from(
-    new Set(games.map((g) => g.platform.name)),
-  ).sort();
-
-  const platformOptions = [
-    { label: "All Platforms", value: "all" },
-    ...uniquePlatforms.map((p) => ({ label: p, value: p })),
-  ];
-
   return (
     <div className="min-h-screen bg-bg">
       <main className="mx-auto max-w-5xl px-4 py-3 sm:px-6 sm:py-8">
@@ -100,38 +79,16 @@ export default function Games() {
 
         <GameAddForm />
 
-        {games.length > 0 && (
-          <div className="mb-6 flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:gap-2">
-            <div className="order-2 w-full sm:order-1 sm:w-64">
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search your library..."
-                showClear={searchQuery.length > 0}
-                onClear={() => setSearchQuery("")}
-              />
-            </div>
-
-            <div className="order-1 flex w-full gap-2 sm:order-2 sm:w-auto">
-              <div className="flex-1 sm:flex-none">
-                <FilterSelect
-                  value={filter}
-                  onValueChange={(val) => setFilter(val as Status | "all")}
-                  options={statusOptions}
-                  placeholder="All Games"
-                />
-              </div>
-              <div className="flex-1 sm:flex-none">
-                <FilterSelect
-                  value={platformFilter}
-                  onValueChange={(val) => setPlatformFilter(val ?? "all")}
-                  options={platformOptions}
-                  placeholder="All Platforms"
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        <GameFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          statusFilter={filter}
+          setStatusFilter={setFilter}
+          platformFilter={platformFilter}
+          setPlatformFilter={setPlatformFilter}
+          games={games}
+          isOwner={true}
+        />
 
         <div ref={pageTopRef} className="scroll-mt-24">
           {isLoading ? (

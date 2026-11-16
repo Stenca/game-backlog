@@ -27,9 +27,6 @@ export default function Header() {
               to={`/u/${user.username}`}
               className="flex items-center whitespace-nowrap text-xs text-ink-muted sm:text-sm hover:text-ink transition-colors"
             >
-              <span className="hidden sm:inline gap-1">
-                Welcome back,&nbsp;
-              </span>
               <span className="text-brand font-medium">{user.displayName}</span>
               <div className="ml-2">
                 <Avatar user={user} size="sm" />
