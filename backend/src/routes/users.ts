@@ -168,6 +168,31 @@ usersRouter.patch(
   },
 );
 
+usersRouter.get("/:username", async (req: AuthedRequest, res) => {
+  try {
+    const user = await User.findOne({
+      username: String(req.params.username),
+    }).select("-passwordHash -email");
+
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+      },
+    });
+  } catch (err) {
+    console.error("[users/get-by-username]", err);
+    res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
 usersRouter.delete("/me/avatar", async (req: AuthedRequest, res) => {
   try {
     const user = await User.findById(req.userId);

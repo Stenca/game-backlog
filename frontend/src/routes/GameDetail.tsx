@@ -5,19 +5,23 @@ import { motion, AnimatePresence } from "motion/react";
 import { type Status, type UserGame } from "../types/Game";
 import { useGameStore } from "../stores/gameStore";
 import { apiFetch } from "../api";
-import GameCover from "../components/games/GameCover";
-import StatusMenu from "../components/games/StatusMenu";
-import PlatformBadge from "../components/games/PlatformBadge";
-import Journal from "../components/journal/Journal";
+import GameCover from "@/components/games/GameCover";
+import StatusMenu from "@/components/games/StatusMenu";
+import PlatformBadge from "@/components/games/PlatformBadge";
+import Journal from "@/components/journal/Journal";
 import StarRating from "@/components/games/StarRating";
 import { Button } from "@/components/ui/button";
 import GameTimeline from "@/components/games/GameTimeline";
 import DeleteConfirmOverlay from "@/components/common/DeleteConfirmOverlay";
 import ErrorState from "@/components/common/ErrorState";
 import GameDetailSkeleton from "@/components/games/GameDetailSkeleton";
+import { useAuthStore } from "@/stores/authStore";
+import Avatar from "@/components/common/Avatar";
+import { getStatusColor } from "@/utils/status";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
+  const user = useAuthStore((s) => s.user);
   const updateStatus = useGameStore((s) => s.updateStatus);
   const updateGame = useGameStore((s) => s.updateGame);
 
@@ -108,7 +112,7 @@ export default function GameDetail() {
       <main className="mx-auto max-w-5xl px-6 py-8">
         <Link
           to="/games"
-          className="mb-6 inline-block text-sm text-brand transition-colors hover:text-brand-hover"
+          className="inline-block text-sm text-brand transition-colors hover:text-brand-hover"
         >
           ← Back to games
         </Link>
@@ -123,6 +127,12 @@ export default function GameDetail() {
 
   if (!game) return null;
 
+  const isPopulated = typeof game.userId === "object" && game.userId !== null;
+  const ownerId = isPopulated
+    ? (game.userId as any).id || (game.userId as any)._id
+    : game.userId;
+  const isOwner = ownerId === user?.id;
+  const gameUser = isPopulated ? (game.userId as any) : null;
   const hasReviewChanges = review !== (game.review ?? "");
 
   return (
@@ -131,11 +141,22 @@ export default function GameDetail() {
       <div className="pointer-events-none absolute top-1/3 -right-20 -z-10 h-100 w-100 rounded-full bg-brand/5 blur-[100px]" />
 
       <Link
-        to="/games"
+        to={isOwner ? "/games" : `/u/${gameUser?.username || ""}`}
         className="mb-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover sm:mb-6"
       >
-        ← Back to games
+        ← Back to {isOwner ? "games" : "profile"}
       </Link>
+
+      {!isOwner && gameUser && (
+        <div className="mb-6 flex items-center gap-3 rounded border border-border bg-surface/50 p-3">
+          <Avatar user={gameUser} size="sm" />
+          <span className="text-sm text-ink-muted">
+            Viewing{" "}
+            <span className="font-medium text-ink">{gameUser.displayName}</span>
+            's library
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-[100px_1fr] gap-4 sm:grid-cols-[150px_1fr] md:grid-cols-[224px_1fr] md:gap-8">
         <div className="flex flex-col gap-4">
@@ -145,12 +166,7 @@ export default function GameDetail() {
           </div>
         </div>
 
-        {/* 
-          This wrapper is normally the right column. 
-          On mobile, we use `contents` so its children flow into the parent grid.
-        */}
         <div className="contents md:flex md:flex-col">
-          {/* Top Info (Title, Dev, Badges) - Right column on mobile, part of right col on desktop */}
           <div className="flex flex-col">
             <h1 className="mt-0 text-xl font-bold tracking-tight text-ink sm:text-3xl">
               {game.game.title}
@@ -180,26 +196,39 @@ export default function GameDetail() {
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
-              <StatusMenu status={game.status} onChange={handleStatusChange} />
+              {isOwner ? (
+                <StatusMenu
+                  status={game.status}
+                  onChange={handleStatusChange}
+                />
+              ) : (
+                <span
+                  className={`inline-flex cursor-default items-center justify-center rounded px-3 py-1.5 text-sm font-medium uppercase tracking-wide text-bg ${getStatusColor(game.status)}`}
+                >
+                  {game.status}
+                </span>
+              )}
               <PlatformBadge platform={game.platform} size="md" />
             </div>
           </div>
 
-          {/* Review Section - Full width under grid on mobile, part of right col on desktop */}
           <div className="col-span-2 mt-2 flex flex-col border-t border-border pt-4 md:col-span-1 md:mt-6 md:flex-1">
             <h2 className="mb-3 text-sm font-semibold text-ink sm:text-base">
-              Your rating and review
+              {isOwner ? "Your rating and review" : "Rating and review"}
             </h2>
 
             <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 sm:gap-4">
-                <StarRating value={rating} onChange={handleRatingChange} />
+                <StarRating
+                  value={rating}
+                  onChange={isOwner ? handleRatingChange : () => {}}
+                />
                 <span className="text-xs text-ink-muted sm:text-sm">
                   {rating > 0 ? `${rating}/5` : "Not rated"}
                 </span>
               </div>
 
-              {game.review && !isEditing && (
+              {isOwner && game.review && !isEditing && (
                 <div className="flex shrink-0 items-center gap-1">
                   <Button
                     variant="ghost"
@@ -226,7 +255,7 @@ export default function GameDetail() {
                 value={review}
                 onChange={(e) => setReview(e.target.value)}
                 onClick={() => {
-                  if (!isEditing) setIsEditing(true);
+                  if (isOwner && !isEditing) setIsEditing(true);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey && isEditing) {
@@ -240,12 +269,16 @@ export default function GameDetail() {
                     setConfirmingDelete(false);
                   }
                 }}
-                placeholder="What did you think of this game?"
-                readOnly={!isEditing || confirmingDelete}
+                placeholder={
+                  isOwner
+                    ? "What did you think of this game?"
+                    : "No review yet."
+                }
+                readOnly={!isOwner || !isEditing || confirmingDelete}
                 className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 pb-10 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none sm:min-h-40 sm:px-4 sm:py-3 sm:pb-12 ${
-                  isEditing
+                  isOwner && isEditing
                     ? "border-border bg-surface shadow-inner focus:border-brand focus:ring-2 focus:ring-brand/20"
-                    : "cursor-pointer border-transparent bg-surface hover:border-brand focus:border-transparent focus:ring-0 text-ink-muted"
+                    : "cursor-default border-transparent bg-surface text-ink-muted"
                 }`}
               />
 
@@ -267,7 +300,7 @@ export default function GameDetail() {
                 )}
               </AnimatePresence>
 
-              {isEditing && !confirmingDelete && (
+              {isOwner && isEditing && !confirmingDelete && (
                 <div className="absolute right-2 bottom-2 flex gap-2 sm:right-3 sm:bottom-3">
                   {game.review && (
                     <Button
@@ -296,7 +329,7 @@ export default function GameDetail() {
         </div>
       </div>
 
-      <Journal gameId={game.game._id} userGameId={game._id} />
+      <Journal gameId={game.game._id} userGameId={game._id} isOwner={isOwner} />
     </main>
   );
 }

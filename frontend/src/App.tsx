@@ -4,11 +4,12 @@ import GameDetail from "./routes/GameDetail";
 import Games from "./routes/Games";
 import Landing from "./routes/Landing";
 import Login from "./routes/Login";
-import Profile from "./routes/Profile";
+import Settings from "./routes/Settings";
 import Register from "./routes/Register";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import NotFound from "@/routes/NotFound";
+import UserProfile from "@/routes/UserProfile";
 
 function App() {
   return (
@@ -20,7 +21,8 @@ function App() {
         <Route path="register" element={<Register />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/u/:username" element={<UserProfile />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/:id" element={<GameDetail />} />
         </Route>

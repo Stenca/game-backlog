@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button";
 type Props = {
   gameId: string;
   userGameId: string;
+  isOwner: boolean;
 };
 
 const ENTRIES_PER_PAGE = 5;
 
-export default function Journal({ gameId, userGameId }: Props) {
+export default function Journal({ gameId, userGameId, isOwner }: Props) {
   const {
     data: entries = [],
     isLoading,
@@ -40,7 +41,7 @@ export default function Journal({ gameId, userGameId }: Props) {
         Journal
       </h2>
 
-      <JournalAddForm gameId={gameId} />
+      {isOwner && <JournalAddForm gameId={gameId} />}
 
       {isLoading ? (
         <JournalSkeleton />
@@ -54,13 +55,19 @@ export default function Journal({ gameId, userGameId }: Props) {
         </div>
       ) : entries.length === 0 ? (
         <p className="mt-6 text-sm text-ink-muted">
-          No entries yet. Write your first one above!
+          {isOwner
+            ? "No entries yet. Write your first one above!"
+            : "This user hasn't written any journal entries for this game yet."}
         </p>
       ) : (
         <>
           <ul className="mt-6 flex flex-col gap-4">
             {visibleEntries.map((entry) => (
-              <JournalEntryItem key={entry._id} entry={entry} />
+              <JournalEntryItem
+                key={entry._id}
+                entry={entry}
+                isOwner={isOwner}
+              />
             ))}
           </ul>
 

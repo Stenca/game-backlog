@@ -10,13 +10,15 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
+import { getStatusColor } from "@/utils/status";
 
 type Props = {
   game: UserGame;
   index?: number;
+  isOwner?: boolean;
 };
 
-export default function GameCard({ game, index = 0 }: Props) {
+export default function GameCard({ game, index = 0, isOwner = true }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -71,33 +73,44 @@ export default function GameCard({ game, index = 0 }: Props) {
                 <div className="pointer-events-auto absolute left-1 top-1 z-10">
                   <PlatformBadge platform={game.platform} size="sm" />
                 </div>
+
                 <div className="pointer-events-auto absolute bottom-1 left-1 z-10">
-                  <StatusMenu
-                    status={game.status}
-                    onChange={async (s) => {
-                      await updateStatus(game._id, s);
-                      toast.add({
-                        type: "success",
-                        title: "Status updated",
-                        description: `Moved to ${s}.`,
-                      });
-                    }}
-                    direction="up"
-                    size="sm"
-                  />
+                  {isOwner ? (
+                    <StatusMenu
+                      status={game.status}
+                      onChange={async (s) => {
+                        await updateStatus(game._id, s);
+                        toast.add({
+                          type: "success",
+                          title: "Status updated",
+                          description: `Moved to ${s}.`,
+                        });
+                      }}
+                      direction="up"
+                      size="sm"
+                    />
+                  ) : (
+                    <span
+                      className={`inline-flex cursor-default items-center rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-bg ${getStatusColor(game.status)}`}
+                    >
+                      {game.status}
+                    </span>
+                  )}
                 </div>
 
-                <div className="pointer-events-auto absolute right-1 top-1 z-20">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setConfirmDelete(true)}
-                    className="bg-bg/70 text-ink opacity-0 transition-all hover:bg-destructive hover:text-ink group-hover:opacity-100"
-                    aria-label="Delete game"
-                  >
-                    <X />
-                  </Button>
-                </div>
+                {isOwner && (
+                  <div className="pointer-events-auto absolute right-1 top-1 z-20">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => setConfirmDelete(true)}
+                      className="bg-bg/70 text-ink opacity-0 transition-all hover:bg-destructive hover:text-ink group-hover:opacity-100"
+                      aria-label="Delete game"
+                    >
+                      <X />
+                    </Button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

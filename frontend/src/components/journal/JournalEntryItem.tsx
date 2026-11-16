@@ -9,20 +9,20 @@ import { toast } from "@/components/ui/toast";
 
 type Props = {
   entry: JournalEntry;
+  isOwner: boolean;
 };
 
-export default function JournalEntryItem({ entry }: Props) {
+export default function JournalEntryItem({ entry, isOwner }: Props) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [error, setError] = useState("");
 
   const editingId = useJournalStore((s) => s.editingId);
   const setEditingId = useJournalStore((s) => s.setEditingId);
   const updateEntry = useJournalStore((s) => s.updateEntry);
   const removeEntry = useJournalStore((s) => s.removeEntry);
 
-  const isEditing = editingId === entry._id;
+  const isEditing = isOwner && editingId === entry._id;
 
   useEffect(() => {
     if (!isEditing && !confirmOpen) return;
@@ -82,12 +82,11 @@ export default function JournalEntryItem({ entry }: Props) {
       ) : (
         <JournalEntryView
           entry={entry}
+          isOwner={isOwner}
           onEdit={() => setEditingId(entry._id)}
           onDelete={() => setConfirmOpen(true)}
         />
       )}
-
-      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
       <AnimatePresence>
         {confirmOpen && (

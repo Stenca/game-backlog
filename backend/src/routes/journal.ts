@@ -18,17 +18,15 @@ journalRouter.use(requireAuth);
 
 journalRouter.get("/game/:userGameId", async (req: AuthedRequest, res) => {
   try {
-    const userGame = await UserGame.findOne({
-      _id: req.params.userGameId,
-      userId: req.userId,
-    });
+    const userGame = await UserGame.findById(req.params.userGameId);
+
     if (!userGame) {
       res.status(404).json({ error: "Game not found" });
       return;
     }
 
     const entries = await JournalEntry.find({
-      userId: req.userId,
+      userId: userGame.userId,
       gameId: userGame.gameId,
     }).sort({ createdAt: -1 });
 

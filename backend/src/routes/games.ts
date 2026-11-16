@@ -6,6 +6,7 @@ import { createGameSchema, updateGameSchema } from "../validators/games";
 import { UserGame } from "../models/UserGame";
 import { searchGames, getGameDetails } from "../services/gameApi";
 import { searchLimiter } from "../middleware/rateLimit";
+import { User } from "../models/User";
 
 const gamesRouter = Router();
 
@@ -43,24 +44,42 @@ gamesRouter.get("/details/:rawgId", async (req: AuthedRequest, res) => {
 });
 
 gamesRouter.get("/", async (req: AuthedRequest, res) => {
-  const userGames = await UserGame.find({ userId: req.userId })
-    .populate("gameId")
-    .sort({ createdAt: -1 });
+  try {
+    let targetUserId = req.userId;
 
-  res.json(
-    userGames.map((ug) => {
-      const { gameId, ...rest } = ug.toObject();
-      return { ...rest, game: gameId };
-    }),
-  );
+    const requestedUsername = req.query.user ? String(req.query.user) : null;
+
+    if (requestedUsername) {
+      const targetUser = await User.findOne({ username: requestedUsername });
+      if (!targetUser) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      targetUserId = targetUser._id.toString();
+    }
+
+    const userGames = await UserGame.find({ userId: targetUserId })
+      .populate("gameId")
+      .sort({ createdAt: -1 });
+
+    res.json(
+      userGames.map((ug) => {
+        const { gameId, ...rest } = ug.toObject();
+        return { ...rest, game: gameId };
+      }),
+    );
+  } catch (err) {
+    console.error("[games/get]", err);
+    res.status(500).json({ error: "Failed to fetch games" });
+  }
 });
 
 gamesRouter.get("/:id", async (req: AuthedRequest, res) => {
   try {
-    const userGame = await UserGame.findOne({
-      _id: req.params.id,
-      userId: req.userId,
-    }).populate("gameId");
+    const userGame = await UserGame.findById(req.params.id)
+      .populate("gameId")
+      .populate("userId", "username displayName avatarUrl");
 
     if (!userGame) {
       res.status(404).json({ error: "Game not found" });
@@ -68,7 +87,8 @@ gamesRouter.get("/:id", async (req: AuthedRequest, res) => {
     }
 
     res.json({ ...userGame.toObject(), game: userGame.gameId });
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(400).json({ error: "Invalid id" });
   }
 });

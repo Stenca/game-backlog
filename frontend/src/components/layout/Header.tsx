@@ -24,7 +24,7 @@ export default function Header() {
         <div className="flex items-center gap-2 sm:gap-4">
           {user && (
             <Link
-              to="/profile"
+              to={`/u/${user.username}`}
               className="flex items-center whitespace-nowrap text-xs text-ink-muted sm:text-sm hover:text-ink transition-colors"
             >
               <span className="hidden sm:inline gap-1">

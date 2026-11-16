@@ -29,6 +29,15 @@ export type GameCatalog = {
 
 export type UserGame = {
   _id: string;
+  userId:
+    | string
+    | {
+        _id: string;
+        id: string;
+        username: string;
+        displayName: string;
+        avatarUrl?: string;
+      };
   status: Status;
   platform: Platform;
   rating?: number;

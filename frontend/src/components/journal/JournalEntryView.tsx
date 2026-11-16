@@ -1,17 +1,22 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { JournalEntry } from "../../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import ImageCarousel from "../common/ImageCarousel";
-
 type Props = {
   entry: JournalEntry;
+  isOwner: boolean;
   onEdit: () => void;
   onDelete: () => void;
 };
 
-export default function JournalEntryView({ entry, onEdit, onDelete }: Props) {
+export default function JournalEntryView({
+  entry,
+  isOwner,
+  onEdit,
+  onDelete,
+}: Props) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -30,24 +35,26 @@ export default function JournalEntryView({ entry, onEdit, onDelete }: Props) {
           </span>
         </span>
 
-        <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 [@media(hover:none)]:opacity-100">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="h-7 px-2 text-xs text-ink-muted hover:text-brand"
-          >
-            Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="h-7 px-2 text-xs text-ink-muted hover:text-destructive"
-          >
-            Delete
-          </Button>
-        </div>
+        {isOwner && (
+          <div className="flex shrink-0 items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              className="h-7 px-2 text-xs text-ink-muted hover:text-brand"
+            >
+              Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              className="h-7 px-2 text-xs text-ink-muted hover:text-destructive"
+            >
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
 
       {entry.body && (
