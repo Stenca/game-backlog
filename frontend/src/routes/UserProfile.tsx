@@ -6,7 +6,6 @@ import { type UserGame } from "@/types/Game";
 import Avatar from "@/components/common/Avatar";
 import Loading from "@/components/common/Loading";
 import ErrorState from "@/components/common/ErrorState";
-
 import ProfileTabs from "@/components/profile/ProfileTabs";
 
 export default function UserProfile() {
@@ -20,6 +19,7 @@ export default function UserProfile() {
   } = useQuery({
     queryKey: ["user", username],
     queryFn: () => apiFetch<{ user: any }>(`/api/users/${username}`),
+    enabled: !!username,
   });
 
   const { data: games = [], isLoading: gamesLoading } = useQuery({
@@ -45,22 +45,24 @@ export default function UserProfile() {
 
   const isOwner = currentUser?.username === username;
 
+  const displayUser = isOwner ? currentUser : userProfile.user;
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-        <Avatar user={userProfile.user} size="lg" />
+        <Avatar user={displayUser} size="lg" />
         <div className="flex flex-1 flex-col items-center sm:items-start">
           <h1 className="text-3xl font-bold text-ink">
-            {userProfile.user.displayName}
+            {displayUser.displayName}
           </h1>
-          <p className="text-sm text-ink-muted">@{userProfile.user.username}</p>
+          <p className="text-sm text-ink-muted">@{displayUser.username}</p>
           <p className="mt-2 text-sm text-ink-muted">
             {games.length} games tracked
           </p>
         </div>
       </div>
 
-      <ProfileTabs user={userProfile.user} games={games} isOwner={isOwner} />
+      <ProfileTabs games={games} isOwner={isOwner} />
     </main>
   );
 }
