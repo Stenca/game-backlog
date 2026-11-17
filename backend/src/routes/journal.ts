@@ -20,7 +20,6 @@ journalRouter.use(requireAuth);
 journalRouter.get("/game/:userGameId", async (req: AuthedRequest, res) => {
   try {
     const userGame = await UserGame.findById(req.params.userGameId);
-
     if (!userGame) {
       res.status(404).json({ error: "Game not found" });
       return;
@@ -29,12 +28,11 @@ journalRouter.get("/game/:userGameId", async (req: AuthedRequest, res) => {
     const entries = await JournalEntry.find({
       userId: userGame.userId,
       gameId: userGame.gameId,
-    })
-      .sort({ createdAt: -1 })
-      .populate("likes", "username displayName avatarUrl");
+    }).sort({ createdAt: -1 });
 
     res.json(entries);
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(400).json({ error: "Invalid id" });
   }
 });

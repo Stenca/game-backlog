@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/api";
 import { useAuthStore } from "@/stores/authStore";
-import type { JournalEntry } from "@/types/Game";
+import type { JournalEntry } from "../../types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import { Button } from "@/components/ui/button";
-import ImageCarousel from "../common/ImageCarousel";
+import ImageCarousel from "@/components/common/ImageCarousel";
+import JournalEntryComments from "./JournalEntryComments";
 import { Heart, MessageSquare } from "lucide-react";
-import JournalEntryComments from "@/components/journal/JournalEntryComments";
 
 type Props = {
   entry: JournalEntry;
@@ -28,9 +28,16 @@ export default function JournalEntryView({
   const [showComments, setShowComments] = useState(false);
 
   const currentUser = useAuthStore((s) => s.user);
-  const [likes, setLikes] = useState<string[]>(entry.likes || []);
 
-  const isLiked = currentUser ? likes.includes(currentUser.id) : false;
+  const [likes, setLikes] = useState<string[]>(
+    (entry.likes || []).map((id: any) => String(id)),
+  );
+
+  useEffect(() => {
+    setLikes((entry.likes || []).map((id: any) => String(id)));
+  }, [entry.likes]);
+
+  const isLiked = currentUser ? likes.includes(String(currentUser.id)) : false;
 
   const likeMutation = useMutation({
     mutationFn: () =>
@@ -40,9 +47,9 @@ export default function JournalEntryView({
       ),
     onSuccess: (data) => {
       if (data.isLiked && currentUser) {
-        setLikes([...likes, currentUser.id]);
+        setLikes([...likes, String(currentUser.id)]);
       } else {
-        setLikes(likes.filter((id) => id !== currentUser?.id));
+        setLikes(likes.filter((id) => id !== String(currentUser?.id)));
       }
     },
   });
