@@ -9,6 +9,7 @@ import {
 } from "../validators/journal.js";
 import multer from "multer";
 import cloudinary from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 const journalRouter = Router();
 
@@ -28,7 +29,9 @@ journalRouter.get("/game/:userGameId", async (req: AuthedRequest, res) => {
     const entries = await JournalEntry.find({
       userId: userGame.userId,
       gameId: userGame.gameId,
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .populate("likes", "username displayName avatarUrl");
 
     res.json(entries);
   } catch {
@@ -95,6 +98,32 @@ journalRouter.post(
     }
   },
 );
+
+journalRouter.post("/:id/like", async (req: AuthedRequest, res) => {
+  try {
+    const entry = await JournalEntry.findById(req.params.id);
+    if (!entry) return res.status(404).json({ error: "Entry not found" });
+
+    const userId = String(req.userId);
+
+    const stringLikes = entry.likes.map((id: any) => id.toString());
+    const isLiked = stringLikes.includes(userId);
+
+    if (isLiked) {
+      entry.likes = entry.likes.filter(
+        (id: any) => id.toString() !== userId,
+      ) as any;
+    } else {
+      entry.likes.push(new mongoose.Types.ObjectId(userId) as any);
+    }
+
+    await entry.save();
+    res.json({ likesCount: entry.likes.length, isLiked: !isLiked });
+  } catch (err) {
+    console.error("[journal/like]", err);
+    res.status(500).json({ error: "Failed to toggle like" });
+  }
+});
 
 journalRouter.patch(
   "/:id",

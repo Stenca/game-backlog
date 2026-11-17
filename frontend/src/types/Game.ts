@@ -73,6 +73,20 @@ export type JournalEntry = {
   body?: string;
   imageUrls?: string[];
   imagePublicIds?: string[];
+  likes: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type Comment = {
+  _id: string;
+  entryId: string;
+  userId: {
+    _id: string;
+    username: string;
+    displayName: string;
+    avatarUrl?: string;
+  };
+  text: string;
+  createdAt: string;
 };

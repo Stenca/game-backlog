@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { type UserGame } from "@/types/Game";
 
-// Export the type so components can use it
 export type UserProfileStats = ReturnType<typeof useProfileStats>;
 
 export function useProfileStats(games: UserGame[]) {

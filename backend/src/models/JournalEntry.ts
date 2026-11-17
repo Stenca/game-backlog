@@ -18,6 +18,10 @@ const journalEntrySchema = new mongoose.Schema(
 
     imageUrls: { type: [String], default: [] },
     imagePublicIds: { type: [String], default: [] },
+    likes: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+      { timestamps: true },
+    ],
   },
   { timestamps: true },
 );

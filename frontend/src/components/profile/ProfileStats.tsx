@@ -16,7 +16,6 @@ export default function ProfileStats({ stats }: Props) {
 
   return (
     <div className="flex flex-col items-center sm:items-start gap-4">
-      {/* Stats Row */}
       <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-ink-muted sm:justify-start">
         {statItems.map((stat, index, array) => (
           <div key={stat.label} className="flex items-center gap-3">
@@ -31,7 +30,6 @@ export default function ProfileStats({ stats }: Props) {
         ))}
       </div>
 
-      {/* Favorites Row */}
       <div className="flex flex-wrap items-center justify-center gap-3 text-sm sm:justify-start">
         {stats.favoritePlatform && (
           <div className="flex items-center gap-2">

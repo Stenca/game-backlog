@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import type { JournalEntry } from "../../types/Game";
+import { useMutation } from "@tanstack/react-query";
+import { apiFetch } from "@/api";
+import { useAuthStore } from "@/stores/authStore";
+import type { JournalEntry } from "@/types/Game";
 import { formatEntryDate, formatRelative } from "@/utils/date";
 import { Button } from "@/components/ui/button";
 import ImageCarousel from "../common/ImageCarousel";
+import { Heart, MessageSquare } from "lucide-react";
+import JournalEntryComments from "@/components/journal/JournalEntryComments";
+
 type Props = {
   entry: JournalEntry;
   isOwner: boolean;
@@ -19,6 +25,27 @@ export default function JournalEntryView({
 }: Props) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+
+  const currentUser = useAuthStore((s) => s.user);
+  const [likes, setLikes] = useState<string[]>(entry.likes || []);
+
+  const isLiked = currentUser ? likes.includes(currentUser.id) : false;
+
+  const likeMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ likesCount: number; isLiked: boolean }>(
+        `/api/journal/${entry._id}/like`,
+        { method: "POST" },
+      ),
+    onSuccess: (data) => {
+      if (data.isLiked && currentUser) {
+        setLikes([...likes, currentUser.id]);
+      } else {
+        setLikes(likes.filter((id) => id !== currentUser?.id));
+      }
+    },
+  });
 
   const openCarousel = (index: number) => {
     setCarouselIndex(index);
@@ -101,6 +128,31 @@ export default function JournalEntryView({
           })}
         </div>
       )}
+
+      <div className="mt-4 flex items-center gap-4 border-t border-border/50 pt-3 text-sm text-ink-muted">
+        <button
+          onClick={() => likeMutation.mutate()}
+          disabled={likeMutation.isPending}
+          className={`flex items-center gap-1 transition-colors hover:text-brand ${
+            isLiked ? "text-brand" : ""
+          }`}
+        >
+          <Heart className={`h-4 w-4 ${isLiked ? "fill-brand" : ""}`} />
+          {likes.length > 0 && <span>{likes.length}</span>}
+        </button>
+
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className={`flex items-center gap-1 transition-colors hover:text-brand ${
+            showComments ? "text-brand" : ""
+          }`}
+        >
+          <MessageSquare className="h-4 w-4" />
+          <span>Comment</span>
+        </button>
+      </div>
+
+      {showComments && <JournalEntryComments entryId={entry._id} />}
 
       <AnimatePresence>
         {carouselOpen && (

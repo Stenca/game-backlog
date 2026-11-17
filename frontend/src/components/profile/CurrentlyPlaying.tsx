@@ -24,7 +24,7 @@ export default function CurrentlyPlaying({ games }: Props) {
               className="h-12 w-9 rounded object-cover"
             />
             <div>
-              <p className="text-sm font-medium text-ink truncate max-w-[150px]">
+              <p className="text-sm font-medium text-ink truncate max-w-37.5">
                 {g.game.title}
               </p>
               <p className="text-xs text-ink-muted">{g.platform.name}</p>
