@@ -6,6 +6,7 @@ import { sortGames } from "@/utils/status";
 import SettingsForm from "./SettingsForm";
 import { Button } from "@/components/ui/button";
 import GameFilters from "@/components/games/GameFilters";
+import { useSearchParams } from "react-router-dom";
 
 type Props = {
   games: UserGame[];
@@ -30,6 +31,7 @@ function ProfileTab({
 }
 
 export default function ProfileTabs({ games, isOwner }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
@@ -45,11 +47,17 @@ export default function ProfileTabs({ games, isOwner }: Props) {
     return matchesSearch && matchesStatus && matchesPlatform;
   });
 
+  const currentTab = searchParams.get("tab") || "overview";
   const sortedGames = sortGames(filteredGames);
   const visibleGames = sortedGames.slice(0, visibleCount);
 
   return (
-    <Tabs defaultValue="overview" className="w-full">
+    <Tabs
+      value={currentTab}
+      onValueChange={(val) => setSearchParams({ tab: val })}
+      defaultValue="overview"
+      className="w-full"
+    >
       <TabsList className="mb-6 grid h-12 w-full grid-cols-[1fr_auto_1fr] items-center rounded-lg border border-border bg-surface-2 p-1">
         <div />
 
