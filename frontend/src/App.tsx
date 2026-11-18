@@ -9,15 +9,17 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import NotFound from "@/routes/NotFound";
 import UserProfile from "@/routes/UserProfile";
+import Feed from "@/routes/Feed";
 
 function App() {
   return (
     <div>
       <Header />
       <Routes>
-        <Route path="/" element={<Landing />}></Route>
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="/feed" element={<Feed />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/u/:username" element={<UserProfile />} />

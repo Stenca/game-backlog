@@ -7,6 +7,7 @@ import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import journalRouter from "./routes/journal.js";
 import commentsRouter from "./routes/comments.js";
+import feedRouter from "./routes/feed.js";
 
 const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL }));
@@ -25,6 +26,8 @@ app.use("/api/users", usersRouter);
 app.use("/api/journal", journalRouter);
 
 app.use("/api/comments", commentsRouter);
+
+app.use("/api/feed", feedRouter);
 
 const PORT = process.env.PORT ?? 3001;
 const MONGODB_URI = process.env.MONGODB_URI;

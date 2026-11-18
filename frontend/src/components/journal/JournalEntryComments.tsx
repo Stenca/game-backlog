@@ -87,7 +87,7 @@ export default function JournalEntryComments({ entryId }: Props) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Add a comment..."
-          className="bg-surface-2 hover: outline-brand"
+          className="bg-surface-2 hover:border-brand"
         />
         <Button
           type="submit"
