@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { AuthedRequest, requireAuth } from "../middleware/requireAuth";
 import { User } from "../models/User";
+import { UserGame } from "../models/UserGame.js";
+import { JournalEntry } from "../models/JournalEntry.js";
+import { Comment } from "../models/Comment.js";
 import { updatePasswordSchema, updateProfileSchema } from "../validators/auth";
 import { validate } from "../middleware/validate";
 import { hashPassword, verifyPassword } from "../utils/auth";
@@ -167,6 +170,81 @@ usersRouter.patch(
     }
   },
 );
+
+usersRouter.get("/:username/activity", async (req: AuthedRequest, res) => {
+  try {
+    const username = String(req.params.username);
+    const user = await User.findOne({ username });
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const userId = user._id;
+
+    const [games, journals, comments] = await Promise.all([
+      UserGame.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate("gameId", "title coverUrl"),
+      JournalEntry.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate("gameId", "title coverUrl"),
+      Comment.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate({
+          path: "entryId",
+          populate: { path: "gameId", select: "title coverUrl" },
+        }),
+    ]);
+
+    const activity: any[] = [];
+
+    games.forEach((ug: any) => {
+      if (!ug.gameId) return;
+      activity.push({
+        id: ug._id.toString(),
+        type: "ADD_GAME",
+        createdAt: ug.createdAt,
+        game: ug.gameId,
+        content: `added ${ug.gameId.title} to their library`,
+      });
+    });
+
+    journals.forEach((entry: any) => {
+      if (!entry.gameId) return;
+      activity.push({
+        id: entry._id.toString(),
+        type: "JOURNAL",
+        createdAt: entry.createdAt,
+        game: entry.gameId,
+        content: `wrote a journal entry for ${entry.gameId.title}`,
+        body: entry.body,
+      });
+    });
+
+    comments.forEach((comment: any) => {
+      if (!comment.entryId?.gameId) return;
+      activity.push({
+        id: comment._id.toString(),
+        type: "COMMENT",
+        createdAt: comment.createdAt,
+        game: comment.entryId.gameId,
+        content: `commented on a journal entry for ${comment.entryId.gameId.title}`,
+        body: comment.text,
+      });
+    });
+
+    activity.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    res.json(activity.slice(0, 20));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch activity" });
+  }
+});
 
 usersRouter.get("/:username", async (req: AuthedRequest, res) => {
   try {

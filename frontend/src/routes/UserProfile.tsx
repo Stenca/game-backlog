@@ -68,7 +68,7 @@ export default function UserProfile() {
         <CurrentlyPlaying games={stats.playingGames} />
       </div>
 
-      <ProfileTabs games={games} isOwner={isOwner} />
+      <ProfileTabs games={games} isOwner={isOwner} username={username!} />
     </main>
   );
 }

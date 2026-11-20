@@ -48,7 +48,7 @@ export default function Header() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
-            to={`/u/${user.username}`}
+            to={`/u/${user.username}?tab=activity`}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <span className="text-brand font-medium">{user.displayName}</span>

@@ -27,15 +27,21 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
       .populate("userId", "username displayName avatarUrl")
       .populate({
         path: "entryId",
-        populate: { path: "gameId", select: "title coverUrl" },
+        populate: [
+          { path: "gameId", select: "title coverUrl" },
+          { path: "userId", select: "username displayName avatarUrl" },
+        ],
       });
 
     const feedItems: any[] = [];
 
+    // ADD_GAME
     recentGames.forEach((ug: any) => {
       if (!ug.userId || !ug.gameId) return;
+
       feedItems.push({
         id: ug._id.toString(),
+        userGameId: ug._id.toString(),
         type: "ADD_GAME",
         createdAt: ug.createdAt,
         user: ug.userId,
@@ -44,31 +50,70 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
       });
     });
 
+    // JOURNAL
+    const journalPromises: Promise<void>[] = [];
+
     recentJournals.forEach((entry: any) => {
       if (!entry.userId || !entry.gameId) return;
-      feedItems.push({
-        id: entry._id.toString(),
-        type: "JOURNAL",
-        createdAt: entry.createdAt,
-        user: entry.userId,
-        game: entry.gameId,
-        content: `wrote a journal entry for ${entry.gameId.title}`,
-        body: entry.body,
-      });
+
+      journalPromises.push(
+        (async () => {
+          const userGame = await UserGame.findOne({
+            userId: entry.userId._id,
+            gameId: entry.gameId._id,
+          }).select("_id");
+
+          feedItems.push({
+            id: entry._id.toString(),
+            userGameId: userGame?._id.toString() ?? null,
+            type: "JOURNAL",
+            createdAt: entry.createdAt,
+            user: entry.userId,
+            game: entry.gameId,
+            content: `wrote a journal entry for ${entry.gameId.title}`,
+            body: entry.body,
+          });
+        })(),
+      );
     });
 
+    await Promise.all(journalPromises);
+
+    // COMMENT
+    const commentPromises: Promise<void>[] = [];
+
     recentComments.forEach((comment: any) => {
-      if (!comment.userId || !comment.entryId?.gameId) return;
-      feedItems.push({
-        id: comment._id.toString(),
-        type: "COMMENT",
-        createdAt: comment.createdAt,
-        user: comment.userId,
-        game: comment.entryId.gameId,
-        content: `commented on a journal entry for ${comment.entryId.gameId.title}`,
-        body: comment.text,
-      });
+      if (
+        !comment.userId ||
+        !comment.entryId?.gameId ||
+        !comment.entryId?.userId
+      ) {
+        return;
+      }
+
+      commentPromises.push(
+        (async () => {
+          // Get the UserGame belonging to the journal author
+          const userGame = await UserGame.findOne({
+            userId: comment.entryId.userId._id,
+            gameId: comment.entryId.gameId._id,
+          }).select("_id");
+
+          feedItems.push({
+            id: comment._id.toString(),
+            userGameId: userGame?._id.toString() ?? null,
+            type: "COMMENT",
+            createdAt: comment.createdAt,
+            user: comment.userId,
+            game: comment.entryId.gameId,
+            content: `commented on a journal entry for ${comment.entryId.gameId.title}`,
+            body: comment.text,
+          });
+        })(),
+      );
     });
+
+    await Promise.all(commentPromises);
 
     feedItems.sort(
       (a, b) =>

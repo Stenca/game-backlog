@@ -7,10 +7,12 @@ import SettingsForm from "./SettingsForm";
 import { Button } from "@/components/ui/button";
 import GameFilters from "@/components/games/GameFilters";
 import { useSearchParams } from "react-router-dom";
+import ActivityFeed from "@/components/common/ActivityFeed";
 
 type Props = {
   games: UserGame[];
   isOwner: boolean;
+  username: string;
 };
 
 function ProfileTab({
@@ -30,7 +32,7 @@ function ProfileTab({
   );
 }
 
-export default function ProfileTabs({ games, isOwner }: Props) {
+export default function ProfileTabs({ games, isOwner, username }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
@@ -62,7 +64,7 @@ export default function ProfileTabs({ games, isOwner }: Props) {
         <div />
 
         <div className="flex h-full items-center gap-1">
-          <ProfileTab value="overview">Overview</ProfileTab>
+          <ProfileTab value="activity">Activity</ProfileTab>
           <ProfileTab value="games">Games</ProfileTab>
           {isOwner && <ProfileTab value="settings">Edit Settings</ProfileTab>}
         </div>
@@ -70,13 +72,8 @@ export default function ProfileTabs({ games, isOwner }: Props) {
         <div />
       </TabsList>
 
-      <TabsContent value="overview">
-        <div className="rounded-xl border border-border bg-surface p-6">
-          <h2 className="text-xl font-bold text-ink">Profile Stats</h2>
-          <p className="mt-2 text-sm text-ink-muted">
-            This is where your stats will go (Total games, Completed, etc).
-          </p>
-        </div>
+      <TabsContent value="activity">
+        <ActivityFeed username={username} />
       </TabsContent>
 
       <TabsContent value="games">
