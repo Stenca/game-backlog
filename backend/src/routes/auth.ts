@@ -1,16 +1,18 @@
 import { Router } from "express";
+import crypto from "node:crypto";
 import { loginSchema, registerSchema } from "../validators/auth.js";
 import { validate } from "../middleware/validate.js";
 import { User } from "../models/User.js";
+import { AuthCode } from "../models/AuthCode.js";
 import { hashPassword, signToken, verifyPassword } from "../utils/auth.js";
-import { authLimiter } from "../middleware/rateLimit.js";
-import crypto from "node:crypto";
+import { generateAuthCode, hashAuthCode } from "../utils/authCode.js";
 import {
   getGoogleAuthUrl,
   googleClient,
   verifyGoogleToken,
 } from "../utils/googleAuth.js";
 import { generateUsername } from "../utils/username.js";
+import { authLimiter } from "../middleware/rateLimit.js";
 
 const authRouter = Router();
 
@@ -41,6 +43,7 @@ authRouter.post(
         email,
         passwordHash,
       });
+
       const token = signToken(user.id);
 
       res.status(201).json({
@@ -64,6 +67,7 @@ authRouter.post(
         });
         return;
       }
+
       console.error("[auth/register]", err);
       res.status(500).json({ error: "Registration failed" });
     }
@@ -93,6 +97,7 @@ authRouter.post(
       }
 
       const token = signToken(user.id);
+
       res.json({
         token,
         user: {
@@ -115,9 +120,7 @@ authRouter.get("/google", (req, res) => {
 
   req.session.googleAuth = { state, nonce };
 
-  const authUrl = getGoogleAuthUrl(state, nonce);
-
-  res.redirect(authUrl);
+  res.redirect(getGoogleAuthUrl(state, nonce));
 });
 
 authRouter.get("/google/callback", async (req, res) => {
@@ -198,6 +201,49 @@ authRouter.get("/google/callback", async (req, res) => {
       });
     }
 
+    const exchangeCode = generateAuthCode();
+
+    await AuthCode.create({
+      codeHash: hashAuthCode(exchangeCode),
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 60 * 1000),
+    });
+
+    res.redirect(
+      `${process.env.CLIENT_URL}/auth/callback?code=${exchangeCode}`,
+    );
+  } catch (err) {
+    console.error("[auth/google/callback]", err);
+    res.status(500).json({ error: "Google authentication failed" });
+  }
+});
+
+authRouter.post("/exchange", async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (typeof code !== "string" || !code) {
+      res.status(400).json({ error: "Invalid code" });
+      return;
+    }
+
+    const authCode = await AuthCode.findOneAndDelete({
+      codeHash: hashAuthCode(code),
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!authCode) {
+      res.status(401).json({ error: "Invalid or expired code" });
+      return;
+    }
+
+    const user = await User.findById(authCode.userId);
+
+    if (!user) {
+      res.status(401).json({ error: "User not found" });
+      return;
+    }
+
     const token = signToken(user.id);
 
     res.json({
@@ -211,8 +257,8 @@ authRouter.get("/google/callback", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("[auth/google/callback]", err);
-    res.status(500).json({ error: "Google authentication failed" });
+    console.error("[auth/exchange]", err);
+    res.status(500).json({ error: "Authentication exchange failed" });
   }
 });
 
