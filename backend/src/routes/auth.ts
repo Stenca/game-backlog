@@ -125,7 +125,6 @@ authRouter.get("/google/callback", async (req, res) => {
     const { code, state } = req.query;
     const googleAuth = req.session.googleAuth;
 
-    // Validate state
     if (
       typeof state !== "string" ||
       !googleAuth ||
@@ -135,7 +134,6 @@ authRouter.get("/google/callback", async (req, res) => {
       return;
     }
 
-    // Consume the state and nonce
     delete req.session.googleAuth;
 
     await new Promise<void>((resolve, reject) => {
