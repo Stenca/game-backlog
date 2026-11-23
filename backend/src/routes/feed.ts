@@ -35,7 +35,6 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
 
     const feedItems: any[] = [];
 
-    // ADD_GAME
     recentGames.forEach((ug: any) => {
       if (!ug.userId || !ug.gameId) return;
 
@@ -50,7 +49,6 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
       });
     });
 
-    // JOURNAL
     const journalPromises: Promise<void>[] = [];
 
     recentJournals.forEach((entry: any) => {
@@ -79,7 +77,6 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
 
     await Promise.all(journalPromises);
 
-    // COMMENT
     const commentPromises: Promise<void>[] = [];
 
     recentComments.forEach((comment: any) => {
@@ -93,7 +90,6 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
 
       commentPromises.push(
         (async () => {
-          // Get the UserGame belonging to the journal author
           const userGame = await UserGame.findOne({
             userId: comment.entryId.userId._id,
             gameId: comment.entryId.gameId._id,
