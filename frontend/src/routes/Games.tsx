@@ -13,6 +13,7 @@ import { ArrowUp } from "lucide-react";
 import { usePagination } from "../hooks/usePagination";
 import Pagination from "@/components/common/Pagination";
 import GameFilters from "@/components/games/GameFilters";
+import PageTransition from "@/components/animations/PageTransition";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -64,89 +65,91 @@ export default function Games() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      <main className="mx-auto max-w-5xl px-4 py-3 sm:px-6 sm:py-8">
-        <div className="mb-4 flex flex-col items-center text-center sm:mb-8 sm:items-start sm:text-left">
-          <Logo
-            size="lg"
-            tagline="Your journey, remembered."
-            className="sm:mb-4"
-          />
-          <p className="mt-3 text-sm text-ink-muted sm:mt-0 sm:text-base">
-            Track your games and take notes of your progress.
-          </p>
-        </div>
-
-        <GameAddForm />
-
-        <GameFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          statusFilter={filter}
-          setStatusFilter={setFilter}
-          platformFilter={platformFilter}
-          setPlatformFilter={setPlatformFilter}
-          games={games}
-          isOwner={true}
-        />
-
-        <div ref={pageTopRef} className="scroll-mt-24">
-          {isLoading ? (
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <li key={i}>
-                  <GameCardSkeleton />
-                </li>
-              ))}
-            </ul>
-          ) : error ? (
-            <ErrorState
-              title="Failed to load your library"
-              message={error.message}
-              onRetry={() => refetch()}
+    <PageTransition>
+      <div className="min-h-screen bg-bg">
+        <main className="mx-auto max-w-5xl px-4 py-3 sm:px-6 sm:py-8">
+          <div className="mb-4 flex flex-col items-center text-center sm:mb-8 sm:items-start sm:text-left">
+            <Logo
+              size="lg"
+              tagline="Your journey, remembered."
+              className="sm:mb-4"
             />
-          ) : filteredGames.length === 0 ? (
-            <div className="relative mt-24 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
-              {games.length === 0 && (
-                <div className="absolute -top-16 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-brand">
-                  <ArrowUp className="h-8 w-8 animate-bounce" />
-                  <span className="text-[10px] font-medium uppercase tracking-wider">
-                    Search above
-                  </span>
-                </div>
-              )}
+            <p className="mt-3 text-sm text-ink-muted sm:mt-0 sm:text-base">
+              Track your games and take notes of your progress.
+            </p>
+          </div>
 
-              <img
-                src={bonfireImg}
-                alt=""
-                className="mb-6 h-20 w-20 object-contain opacity-40 grayscale"
+          <GameAddForm />
+
+          <GameFilters
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            statusFilter={filter}
+            setStatusFilter={setFilter}
+            platformFilter={platformFilter}
+            setPlatformFilter={setPlatformFilter}
+            games={games}
+            isOwner={true}
+          />
+
+          <div ref={pageTopRef} className="scroll-mt-24">
+            {isLoading ? (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <li key={i}>
+                    <GameCardSkeleton />
+                  </li>
+                ))}
+              </ul>
+            ) : error ? (
+              <ErrorState
+                title="Failed to load your library"
+                message={error.message}
+                onRetry={() => refetch()}
               />
-              <h3 className="text-xl font-bold tracking-tight text-ink">
-                {games.length === 0
-                  ? "Your campfire is empty"
-                  : "No games found"}
-              </h3>
-              <p className="mt-2 max-w-md text-sm text-ink-muted">
-                {games.length === 0
-                  ? "Search for a game above to start tracking your journey and lighting the fire."
-                  : "Try changing your filters or search query to find what you're looking for."}
-              </p>
-            </div>
-          ) : (
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {paginatedItems.map((g, i) => (
-                <GameCard key={g._id} game={g} index={i} />
-              ))}
-            </ul>
-          )}
-        </div>
+            ) : filteredGames.length === 0 ? (
+              <div className="relative mt-24 flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/30 px-6 py-20 text-center">
+                {games.length === 0 && (
+                  <div className="absolute -top-16 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-brand">
+                    <ArrowUp className="h-8 w-8 animate-bounce" />
+                    <span className="text-[10px] font-medium uppercase tracking-wider">
+                      Search above
+                    </span>
+                  </div>
+                )}
 
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={paginate}
-        />
-      </main>
-    </div>
+                <img
+                  src={bonfireImg}
+                  alt=""
+                  className="mb-6 h-20 w-20 object-contain opacity-40 grayscale"
+                />
+                <h3 className="text-xl font-bold tracking-tight text-ink">
+                  {games.length === 0
+                    ? "Your campfire is empty"
+                    : "No games found"}
+                </h3>
+                <p className="mt-2 max-w-md text-sm text-ink-muted">
+                  {games.length === 0
+                    ? "Search for a game above to start tracking your journey and lighting the fire."
+                    : "Try changing your filters or search query to find what you're looking for."}
+                </p>
+              </div>
+            ) : (
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {paginatedItems.map((g, i) => (
+                  <GameCard key={g._id} game={g} index={i} />
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={paginate}
+          />
+        </main>
+      </div>
+    </PageTransition>
   );
 }

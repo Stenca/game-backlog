@@ -18,6 +18,7 @@ import GameDetailSkeleton from "@/components/games/GameDetailSkeleton";
 import { useAuthStore } from "@/stores/authStore";
 import Avatar from "@/components/common/Avatar";
 import { getStatusColor } from "@/utils/status";
+import PageTransition from "@/components/animations/PageTransition";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
@@ -136,200 +137,208 @@ export default function GameDetail() {
   const hasReviewChanges = review !== (game.review ?? "");
 
   return (
-    <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
-      <div className="pointer-events-none absolute -top-10 -left-10 -z-10 h-125 w-125 rounded-full bg-brand/10 blur-[120px]" />
-      <div className="pointer-events-none absolute top-1/3 -right-20 -z-10 h-100 w-100 rounded-full bg-brand/5 blur-[100px]" />
+    <PageTransition>
+      <main className="relative mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="pointer-events-none absolute -top-10 -left-10 -z-10 h-125 w-125 rounded-full bg-brand/10 blur-[120px]" />
+        <div className="pointer-events-none absolute top-1/3 -right-20 -z-10 h-100 w-100 rounded-full bg-brand/5 blur-[100px]" />
 
-      <Link
-        to={isOwner ? "/games" : `/u/${gameUser?.username || ""}`}
-        className="mb-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover sm:mb-6"
-      >
-        ← Back to {isOwner ? "games" : "profile"}
-      </Link>
+        <Link
+          to={isOwner ? "/games" : `/u/${gameUser?.username || ""}`}
+          className="mb-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover sm:mb-6"
+        >
+          ← Back to {isOwner ? "games" : "profile"}
+        </Link>
 
-      {!isOwner && gameUser && (
-        <div className="mb-6 flex items-center gap-3 rounded border border-border bg-surface/50 p-3">
-          <Avatar user={gameUser} size="sm" />
-          <span className="text-sm text-ink-muted">
-            Viewing{" "}
-            <span className="font-medium text-ink">{gameUser.displayName}</span>
-            's library
-          </span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-[100px_1fr] gap-4 sm:grid-cols-[150px_1fr] md:grid-cols-[224px_1fr] md:gap-8">
-        <div className="flex flex-col gap-4">
-          <GameCover game={game} showStatus={false} />
-          <div className="flex flex-1 flex-col justify-end rounded bg-surface p-2 sm:p-3">
-            <GameTimeline game={game} />
+        {!isOwner && gameUser && (
+          <div className="mb-6 flex items-center gap-3 rounded border border-border bg-surface/50 p-3">
+            <Avatar user={gameUser} size="sm" />
+            <span className="text-sm text-ink-muted">
+              Viewing{" "}
+              <span className="font-medium text-ink">
+                {gameUser.displayName}
+              </span>
+              's library
+            </span>
           </div>
-        </div>
+        )}
 
-        <div className="contents md:flex md:flex-col">
-          <div className="flex flex-col">
-            <h1 className="mt-0 text-xl font-bold tracking-tight text-ink sm:text-3xl">
-              {game.game.title}
-            </h1>
-
-            <div className="mt-1 text-xs text-ink-muted sm:text-sm">
-              {game.game.developers && game.game.developers.length > 0 && (
-                <p>
-                  <span className="text-ink">by </span>
-                  <span className="text-ink">
-                    {game.game.developers.join(", ")}
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted sm:text-sm">
-              {game.game.releaseDate && (
-                <span>{game.game.releaseDate.slice(0, 4)}</span>
-              )}
-              {game.game.genres && game.game.genres.length > 0 && (
-                <>
-                  <span>•</span>
-                  <span>{game.game.genres.join(", ")}</span>
-                </>
-              )}
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
-              {isOwner ? (
-                <StatusMenu
-                  status={game.status}
-                  onChange={handleStatusChange}
-                />
-              ) : (
-                <span
-                  className={`inline-flex cursor-default items-center justify-center rounded px-3 py-1.5 text-sm font-medium uppercase tracking-wide text-bg ${getStatusColor(game.status)}`}
-                >
-                  {game.status}
-                </span>
-              )}
-              <PlatformBadge platform={game.platform} size="md" />
+        <div className="grid grid-cols-[100px_1fr] gap-4 sm:grid-cols-[150px_1fr] md:grid-cols-[224px_1fr] md:gap-8">
+          <div className="flex flex-col gap-4">
+            <GameCover game={game} showStatus={false} />
+            <div className="flex flex-1 flex-col justify-center rounded bg-surface p-2 sm:p-3">
+              <GameTimeline game={game} />
             </div>
           </div>
 
-          <div className="col-span-2 mt-2 flex flex-col border-t border-border pt-4 md:col-span-1 md:mt-6 md:flex-1">
-            <h2 className="mb-3 text-sm font-semibold text-ink sm:text-base">
-              {isOwner ? "Your rating and review" : "Rating and review"}
-            </h2>
+          <div className="contents md:flex md:flex-col">
+            <div className="flex flex-col">
+              <h1 className="mt-0 text-xl font-bold tracking-tight text-ink sm:text-3xl">
+                {game.game.title}
+              </h1>
 
-            <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <StarRating
-                  value={rating}
-                  onChange={isOwner ? handleRatingChange : () => {}}
-                />
-                <span className="text-xs text-ink-muted sm:text-sm">
-                  {rating > 0 ? `${rating}/5` : "Not rated"}
-                </span>
+              <div className="mt-1 text-xs text-ink-muted sm:text-sm">
+                {game.game.developers && game.game.developers.length > 0 && (
+                  <p>
+                    <span className="text-ink">by </span>
+                    <span className="text-ink">
+                      {game.game.developers.join(", ")}
+                    </span>
+                  </p>
+                )}
               </div>
 
-              {isOwner && game.review && !isEditing && (
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="h-6 px-2 text-xs text-brand hover:text-brand-hover"
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted sm:text-sm">
+                {game.game.releaseDate && (
+                  <span>{game.game.releaseDate.slice(0, 4)}</span>
+                )}
+                {game.game.genres && game.game.genres.length > 0 && (
+                  <>
+                    <span>•</span>
+                    <span>{game.game.genres.join(", ")}</span>
+                  </>
+                )}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
+                {isOwner ? (
+                  <StatusMenu
+                    status={game.status}
+                    onChange={handleStatusChange}
+                  />
+                ) : (
+                  <span
+                    className={`inline-flex cursor-default items-center justify-center rounded px-3 py-1.5 text-sm font-medium uppercase tracking-wide text-bg ${getStatusColor(game.status)}`}
                   >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setConfirmingDelete(true)}
-                    className="h-6 px-2 text-xs text-destructive hover:text-destructive-hover"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              )}
+                    {game.status}
+                  </span>
+                )}
+                <PlatformBadge platform={game.platform} size="md" />
+              </div>
             </div>
 
-            <div className="relative flex flex-1 flex-col">
-              <textarea
-                value={review}
-                onChange={(e) => setReview(e.target.value)}
-                onClick={() => {
-                  if (isOwner && !isEditing) setIsEditing(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey && isEditing) {
-                    if (hasReviewChanges) {
-                      e.preventDefault();
-                      handleSaveReview();
-                    }
-                  }
-                  if (e.key === "Escape" && confirmingDelete) {
-                    e.preventDefault();
-                    setConfirmingDelete(false);
-                  }
-                }}
-                placeholder={
-                  isOwner
-                    ? "What did you think of this game?"
-                    : "No review yet."
-                }
-                readOnly={!isOwner || !isEditing || confirmingDelete}
-                className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 pb-10 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none sm:min-h-40 sm:px-4 sm:py-3 sm:pb-12 ${
-                  isOwner && isEditing
-                    ? "border-border bg-surface shadow-inner focus:border-brand focus:ring-2 focus:ring-brand/20"
-                    : "cursor-default border-transparent bg-surface text-ink-muted"
-                }`}
-              />
+            <div className="col-span-2 mt-2 flex flex-col border-t border-border pt-4 md:col-span-1 md:mt-6 md:flex-1">
+              <h2 className="mb-3 text-sm font-semibold text-ink sm:text-base">
+                {isOwner ? "Your rating and review" : "Rating and review"}
+              </h2>
 
-              <AnimatePresence>
-                {confirmingDelete && (
-                  <motion.div
-                    key="delete-review-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-20"
-                  >
-                    <DeleteConfirmOverlay
-                      onConfirm={handleDeleteReview}
-                      onCancel={() => setConfirmingDelete(false)}
-                      isDeleting={savingReview}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <StarRating
+                    value={rating}
+                    onChange={isOwner ? handleRatingChange : () => {}}
+                  />
+                  <span className="text-xs text-ink-muted sm:text-sm">
+                    {rating > 0 ? `${rating}/5` : "Not rated"}
+                  </span>
+                </div>
 
-              {isOwner && isEditing && !confirmingDelete && (
-                <div className="absolute right-2 bottom-2 flex gap-2 sm:right-3 sm:bottom-3">
-                  {game.review && (
+                {isOwner && game.review && !isEditing && (
+                  <div className="flex shrink-0 items-center gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        setReview(game.review ?? "");
-                        setIsEditing(false);
-                      }}
+                      onClick={() => setIsEditing(true)}
+                      className="h-6 px-2 text-xs text-brand hover:text-brand-hover"
                     >
-                      Cancel
+                      Edit
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmingDelete(true)}
+                      className="h-6 px-2 text-xs text-destructive hover:text-destructive-hover"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative flex flex-1 flex-col">
+                <textarea
+                  value={review}
+                  onChange={(e) => setReview(e.target.value)}
+                  onClick={() => {
+                    if (isOwner && !isEditing) setIsEditing(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && isEditing) {
+                      if (hasReviewChanges) {
+                        e.preventDefault();
+                        handleSaveReview();
+                      }
+                    }
+                    if (e.key === "Escape" && confirmingDelete) {
+                      e.preventDefault();
+                      setConfirmingDelete(false);
+                    }
+                  }}
+                  placeholder={
+                    isOwner
+                      ? "What did you think of this game?"
+                      : "No review yet."
+                  }
+                  readOnly={!isOwner || !isEditing || confirmingDelete}
+                  className={`block min-h-32 w-full flex-1 resize-none rounded border px-3 py-2 pb-10 text-sm leading-relaxed placeholder:text-ink-dim focus:outline-none transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none sm:min-h-40 sm:px-4 sm:py-3 sm:pb-12 ${
+                    isOwner && isEditing
+                      ? "border-border bg-surface shadow-inner hover:border-brand focus:border-brand focus:ring-2 focus:ring-brand/20"
+                      : "cursor-default border-transparent bg-surface text-ink-muted"
+                  }`}
+                />
+
+                <AnimatePresence>
+                  {confirmingDelete && (
+                    <motion.div
+                      key="delete-review-overlay"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-20"
+                    >
+                      <DeleteConfirmOverlay
+                        onConfirm={handleDeleteReview}
+                        onCancel={() => setConfirmingDelete(false)}
+                        isDeleting={savingReview}
+                      />
+                    </motion.div>
                   )}
-                  <Button
-                    size="sm"
-                    onClick={handleSaveReview}
-                    disabled={!hasReviewChanges}
-                    isLoading={savingReview}
-                  >
-                    Save Review
-                  </Button>
-                </div>
-              )}
+                </AnimatePresence>
+
+                {isOwner && isEditing && !confirmingDelete && (
+                  <div className="absolute right-2 bottom-2 flex gap-2 sm:right-3 sm:bottom-3">
+                    {game.review && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setReview(game.review ?? "");
+                          setIsEditing(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={handleSaveReview}
+                      disabled={!hasReviewChanges}
+                      isLoading={savingReview}
+                    >
+                      Save Review
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <Journal gameId={game.game._id} userGameId={game._id} isOwner={isOwner} />
-    </main>
+        <Journal
+          gameId={game.game._id}
+          userGameId={game._id}
+          isOwner={isOwner}
+        />
+      </main>
+    </PageTransition>
   );
 }

@@ -106,14 +106,14 @@ export default function SettingsForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded border border-border bg-surface p-6">
+      <section className="rounded border border-border bg-surface p-6 hover:border-brand">
         <h2 className="text-lg font-semibold text-ink">Avatar</h2>
         <div className="mt-4">
           <AvatarUpload />
         </div>
       </section>
 
-      <section className="rounded border border-border bg-surface p-6">
+      <section className="rounded border border-border bg-surface p-6 hover:border-brand">
         <h2 className="text-lg font-semibold text-ink">Account</h2>
 
         <form
@@ -166,7 +166,7 @@ export default function SettingsForm() {
         </form>
       </section>
 
-      <section className="rounded border border-border bg-surface p-6">
+      <section className="rounded border border-border bg-surface p-6 hover:border-brand">
         <h2 className="text-lg font-semibold text-ink">Change password</h2>
 
         <form

@@ -27,8 +27,13 @@ export default function ActivityFeed({ username }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
-      {activity.map((item) => (
-        <ActivityItem key={item.id} item={item} showUser={isGlobal} />
+      {activity.map((item, index) => (
+        <ActivityItem
+          key={item.id}
+          item={item}
+          showUser={isGlobal}
+          index={index}
+        />
       ))}
     </div>
   );

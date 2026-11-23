@@ -1,19 +1,37 @@
 import { Link } from "react-router-dom";
 import { formatRelative } from "@/utils/date";
 import Avatar from "@/components/common/Avatar";
+import { motion } from "motion/react";
 
 type Props = {
   item: any;
+  index?: number;
+
   showUser?: boolean;
 };
 
-export default function ActivityItem({ item, showUser = true }: Props) {
+export default function ActivityItem({
+  item,
+  index = 0,
+  showUser = true,
+}: Props) {
   const gameLink = item.userGameId ? `/games/${item.userGameId}` : "#";
 
   const hasBody = !!item.body;
 
   return (
-    <div className="flex flex-col h-full gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm hover:border-brand">
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+      transition={{
+        duration: 0.4,
+        ease: "easeOut",
+        delay: Math.min(index * 0.03, 0.45),
+      }}
+      className="flex h-full flex-col gap-3 rounded-xl border border-border bg-surface p-4 shadow-sm hover:border-brand"
+    >
       <div className="flex items-start justify-between gap-4">
         {showUser && item.user && (
           <Link
@@ -63,6 +81,6 @@ export default function ActivityItem({ item, showUser = true }: Props) {
           </span>
         </Link>
       )}
-    </div>
+    </motion.div>
   );
 }

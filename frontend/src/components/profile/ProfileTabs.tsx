@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import GameFilters from "@/components/games/GameFilters";
 import { useSearchParams } from "react-router-dom";
 import ActivityFeed from "@/components/common/ActivityFeed";
+import PageTransition from "@/components/animations/PageTransition";
 
 type Props = {
   games: UserGame[];
@@ -77,44 +78,48 @@ export default function ProfileTabs({ games, isOwner, username }: Props) {
       </TabsContent>
 
       <TabsContent value="games">
-        <GameFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          platformFilter={platformFilter}
-          setPlatformFilter={setPlatformFilter}
-          games={games}
-          isOwner={isOwner}
-        />
+        <PageTransition>
+          <GameFilters
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            platformFilter={platformFilter}
+            setPlatformFilter={setPlatformFilter}
+            games={games}
+            isOwner={isOwner}
+          />
 
-        {sortedGames.length === 0 ? (
-          <p className="text-center text-ink-muted">No games found.</p>
-        ) : (
-          <>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {visibleGames.map((g, i) => (
-                <GameCard key={g._id} game={g} index={i} isOwner={false} />
-              ))}
-            </ul>
+          {sortedGames.length === 0 ? (
+            <p className="text-center text-ink-muted">No games found.</p>
+          ) : (
+            <>
+              <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {visibleGames.map((g, i) => (
+                  <GameCard key={g._id} game={g} index={i} isOwner={false} />
+                ))}
+              </ul>
 
-            {visibleCount < sortedGames.length && (
-              <div className="mt-6 flex justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => setVisibleCount((prev) => prev + 24)}
-                >
-                  Load More Games
-                </Button>
-              </div>
-            )}
-          </>
-        )}
+              {visibleCount < sortedGames.length && (
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleCount((prev) => prev + 24)}
+                  >
+                    Load More Games
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </PageTransition>
       </TabsContent>
 
       {isOwner && (
         <TabsContent value="settings">
-          <SettingsForm />
+          <PageTransition>
+            <SettingsForm />
+          </PageTransition>
         </TabsContent>
       )}
     </Tabs>
