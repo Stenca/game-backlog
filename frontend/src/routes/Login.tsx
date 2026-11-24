@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/authStore";
 import { apiFetch } from "../api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { GoogleLoginButton } from "@/components/common/GoogleLoginButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -68,7 +69,15 @@ export default function Login() {
             {error}
           </p>
         )}
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-sm text-muted-foreground">OR</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
 
+          <GoogleLoginButton />
+        </div>
         <Button type="submit" className="mt-2 w-full" isLoading={isLoading}>
           Log in
         </Button>

@@ -98,18 +98,31 @@ usersRouter.patch(
   async (req: AuthedRequest, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      const user = await User.findById(req.userId);
+
+      const user = await User.findById(req.userId).select("+passwordHash");
+
       if (!user) {
         res.status(404).json({ error: "User not found" });
         return;
       }
+
+      if (!user.passwordHash) {
+        res.status(400).json({
+          error: "This account does not have a password.",
+        });
+        return;
+      }
+
       const valid = await verifyPassword(currentPassword, user.passwordHash);
+
       if (!valid) {
         res.status(401).json({ error: "Current password is incorrect" });
         return;
       }
+
       user.passwordHash = await hashPassword(newPassword);
       await user.save();
+
       res.json({ ok: true });
     } catch (err) {
       console.error("[users/password]", err);

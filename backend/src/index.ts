@@ -8,25 +8,10 @@ import usersRouter from "./routes/users.js";
 import journalRouter from "./routes/journal.js";
 import commentsRouter from "./routes/comments.js";
 import feedRouter from "./routes/feed.js";
-import session from "express-session";
 
 const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET!,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 10 * 60 * 1000,
-    },
-  }),
-);
 
 app.use("/api/games", gamesRouter);
 

@@ -71,6 +71,7 @@ export default function SettingsForm() {
     e.preventDefault();
 
     const payload: Record<string, string> = {};
+
     if (username !== user?.username) payload.username = username;
     if (displayName !== user?.displayName) payload.displayName = displayName;
     if (email !== user?.email) payload.email = email;
@@ -166,67 +167,76 @@ export default function SettingsForm() {
         </form>
       </section>
 
-      <section className="rounded border border-border bg-surface p-6 hover:border-brand">
-        <h2 className="text-lg font-semibold text-ink">Change password</h2>
+      {user.hasPassword ? (
+        <section className="rounded border border-border bg-surface p-6 hover:border-brand">
+          <h2 className="text-lg font-semibold text-ink">Change password</h2>
 
-        <form
-          onSubmit={handlePasswordSubmit}
-          className="mt-4 flex flex-col gap-3"
-        >
-          <label className="flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-ink-muted">
-              Current password
-            </span>
-            <Input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-              className="bg-surface-2"
-            />
-          </label>
+          <form
+            onSubmit={handlePasswordSubmit}
+            className="mt-4 flex flex-col gap-3"
+          >
+            <label className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-wide text-ink-muted">
+                Current password
+              </span>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className="bg-surface-2"
+              />
+            </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-ink-muted">
-              New password
-            </span>
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="bg-surface-2"
-            />
-          </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-wide text-ink-muted">
+                New password
+              </span>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="bg-surface-2"
+              />
+            </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-xs uppercase tracking-wide text-ink-muted">
-              Confirm new password
-            </span>
-            <Input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-              className="bg-surface-2"
-            />
-          </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-wide text-ink-muted">
+                Confirm new password
+              </span>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                className="bg-surface-2"
+              />
+            </label>
 
-          <div className="mt-2 flex justify-end">
-            <Button
-              type="submit"
-              isLoading={updatePasswordMutation.isPending}
-              className="shrink-0"
-            >
-              Update password
-            </Button>
-          </div>
-        </form>
-      </section>
+            <div className="mt-2 flex justify-end">
+              <Button
+                type="submit"
+                isLoading={updatePasswordMutation.isPending}
+                className="shrink-0"
+              >
+                Update password
+              </Button>
+            </div>
+          </form>
+        </section>
+      ) : (
+        <section className="rounded border border-border bg-surface p-6">
+          <h2 className="text-lg font-semibold text-ink">Password</h2>
+          <p className="mt-2 text-sm text-ink-muted">
+            Your account uses Google Sign-In. You don't have a Bonfire password.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

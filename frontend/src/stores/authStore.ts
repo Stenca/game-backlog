@@ -8,6 +8,7 @@ export type User = {
   avatarUrl?: string;
   displayName: string;
   email: string;
+  hasPassword: boolean;
 };
 
 type AuthState = {

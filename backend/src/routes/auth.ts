@@ -1,16 +1,9 @@
 import { Router } from "express";
-import crypto from "node:crypto";
 import { loginSchema, registerSchema } from "../validators/auth.js";
 import { validate } from "../middleware/validate.js";
 import { User } from "../models/User.js";
-import { AuthCode } from "../models/AuthCode.js";
 import { hashPassword, signToken, verifyPassword } from "../utils/auth.js";
-import { generateAuthCode, hashAuthCode } from "../utils/authCode.js";
-import {
-  getGoogleAuthUrl,
-  googleClient,
-  verifyGoogleToken,
-} from "../utils/googleAuth.js";
+import { googleClient, verifyGoogleToken } from "../utils/googleAuth.js";
 import { generateUsername } from "../utils/username.js";
 import { authLimiter } from "../middleware/rateLimit.js";
 
@@ -54,6 +47,7 @@ authRouter.post(
           avatarUrl: user.avatarUrl,
           displayName: user.displayName,
           email: user.email,
+          hasPassword: Boolean(user.passwordHash),
         },
       });
     } catch (err: any) {
@@ -106,6 +100,7 @@ authRouter.post(
           avatarUrl: user.avatarUrl,
           displayName: user.displayName,
           email: user.email,
+          hasPassword: Boolean(user.passwordHash),
         },
       });
     } catch {
@@ -114,54 +109,34 @@ authRouter.post(
   },
 );
 
-authRouter.get("/google", (req, res) => {
-  const state = crypto.randomBytes(32).toString("hex");
-  const nonce = crypto.randomBytes(32).toString("hex");
-
-  req.session.googleAuth = { state, nonce };
-
-  res.redirect(getGoogleAuthUrl(state, nonce));
-});
-
-authRouter.get("/google/callback", async (req, res) => {
+authRouter.post("/google/exchange", authLimiter, async (req, res) => {
   try {
-    const { code, state } = req.query;
-    const googleAuth = req.session.googleAuth;
+    const clientUrl = process.env.CLIENT_URL;
 
     if (
-      typeof state !== "string" ||
-      !googleAuth ||
-      state !== googleAuth.state
+      !clientUrl ||
+      req.get("Origin") !== new URL(clientUrl).origin ||
+      req.get("X-Requested-With") !== "XmlHttpRequest"
     ) {
-      res.status(400).json({ error: "Invalid OAuth state" });
+      res.status(403).json({ error: "Invalid authentication request" });
       return;
     }
 
-    delete req.session.googleAuth;
+    const { code } = req.body;
 
-    await new Promise<void>((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    if (typeof code !== "string") {
-      res.status(400).json({ error: "Missing authorization code" });
+    if (typeof code !== "string" || !code) {
+      res.status(400).json({ error: "Invalid authorization code" });
       return;
     }
 
-    const { tokens } = await googleClient.getToken(code);
+    const { tokens } = await googleClient.getToken({ code });
 
     if (!tokens.id_token) {
       res.status(401).json({ error: "Missing Google ID token" });
       return;
     }
 
-    const googleUser = await verifyGoogleToken(
-      tokens.id_token,
-      googleAuth.nonce,
-    );
+    const googleUser = await verifyGoogleToken(tokens.id_token);
 
     let user = await User.findOne({
       authProviders: {
@@ -201,49 +176,6 @@ authRouter.get("/google/callback", async (req, res) => {
       });
     }
 
-    const exchangeCode = generateAuthCode();
-
-    await AuthCode.create({
-      codeHash: hashAuthCode(exchangeCode),
-      userId: user.id,
-      expiresAt: new Date(Date.now() + 60 * 1000),
-    });
-
-    res.redirect(
-      `${process.env.CLIENT_URL}/auth/callback?code=${exchangeCode}`,
-    );
-  } catch (err) {
-    console.error("[auth/google/callback]", err);
-    res.status(500).json({ error: "Google authentication failed" });
-  }
-});
-
-authRouter.post("/exchange", async (req, res) => {
-  try {
-    const { code } = req.body;
-
-    if (typeof code !== "string" || !code) {
-      res.status(400).json({ error: "Invalid code" });
-      return;
-    }
-
-    const authCode = await AuthCode.findOneAndDelete({
-      codeHash: hashAuthCode(code),
-      expiresAt: { $gt: new Date() },
-    });
-
-    if (!authCode) {
-      res.status(401).json({ error: "Invalid or expired code" });
-      return;
-    }
-
-    const user = await User.findById(authCode.userId);
-
-    if (!user) {
-      res.status(401).json({ error: "User not found" });
-      return;
-    }
-
     const token = signToken(user.id);
 
     res.json({
@@ -254,11 +186,12 @@ authRouter.post("/exchange", async (req, res) => {
         avatarUrl: user.avatarUrl,
         displayName: user.displayName,
         email: user.email,
+        hasPassword: Boolean(user.passwordHash),
       },
     });
   } catch (err) {
-    console.error("[auth/exchange]", err);
-    res.status(500).json({ error: "Authentication exchange failed" });
+    console.error("[auth/google/exchange]", err);
+    res.status(500).json({ error: "Google authentication failed" });
   }
 });
 
