@@ -17,11 +17,13 @@ usersRouter.use(requireAuth);
 const upload = multer({ storage: multer.memoryStorage() });
 
 usersRouter.get("/me", async (req: AuthedRequest, res) => {
-  const user = await User.findById(req.userId).select("-passwordHash");
+  const user = await User.findById(req.userId).select("+passwordHash");
+
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
   }
+
   res.json({
     user: {
       id: user.id,
@@ -29,6 +31,7 @@ usersRouter.get("/me", async (req: AuthedRequest, res) => {
       avatarUrl: user.avatarUrl,
       displayName: user.displayName,
       email: user.email,
+      hasPassword: Boolean(user.passwordHash),
     },
   });
 });
@@ -220,6 +223,7 @@ usersRouter.get("/:username/activity", async (req: AuthedRequest, res) => {
         type: "ADD_GAME",
         createdAt: ug.createdAt,
         game: ug.gameId,
+        targetUrl: `/games/${ug._id}`,
         content: `added ${ug.gameId.title} to their library`,
       });
     });
@@ -231,6 +235,9 @@ usersRouter.get("/:username/activity", async (req: AuthedRequest, res) => {
         type: "JOURNAL",
         createdAt: entry.createdAt,
         game: entry.gameId,
+        targetUrl: entry.userGameId
+          ? `/games/${entry.userGameId}`
+          : `/u/${username}?tab=games`,
         content: `wrote a journal entry for ${entry.gameId.title}`,
         body: entry.body,
       });
@@ -243,6 +250,9 @@ usersRouter.get("/:username/activity", async (req: AuthedRequest, res) => {
         type: "COMMENT",
         createdAt: comment.createdAt,
         game: comment.entryId.gameId,
+        targetUrl: comment.entryId.userGameId
+          ? `/games/${comment.entryId.userGameId}`
+          : `/u/${username}?tab=games`,
         content: `commented on a journal entry for ${comment.entryId.gameId.title}`,
         body: comment.text,
       });

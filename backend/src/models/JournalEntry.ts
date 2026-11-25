@@ -14,14 +14,17 @@ const journalEntrySchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    userGameId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "UserGame",
+      required: true,
+    },
     body: { type: String, trim: true, maxlength: 5000 },
 
     imageUrls: { type: [String], default: [] },
     imagePublicIds: { type: [String], default: [] },
-    likes: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
-      { timestamps: true },
-    ],
+
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true },
 );

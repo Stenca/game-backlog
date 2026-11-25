@@ -8,7 +8,7 @@ commentsRouter.use(requireAuth);
 
 commentsRouter.get("/entry/:entryId", async (req: AuthedRequest, res) => {
   try {
-    const entryId = String(req.params.entryId); // <-- Fix here
+    const entryId = String(req.params.entryId);
 
     const comments = await Comment.find({ entryId })
       .populate("userId", "username displayName avatarUrl")

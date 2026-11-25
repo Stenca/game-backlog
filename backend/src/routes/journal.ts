@@ -84,6 +84,7 @@ journalRouter.post(
       const entry = await JournalEntry.create({
         userId: req.userId,
         gameId: req.body.gameId,
+        userGameId: userGame._id,
         body: req.body.body?.trim() || undefined,
         imageUrls,
         imagePublicIds,

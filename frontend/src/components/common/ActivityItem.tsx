@@ -6,8 +6,8 @@ import { motion } from "motion/react";
 type Props = {
   item: any;
   index?: number;
-
   showUser?: boolean;
+  username?: string;
 };
 
 export default function ActivityItem({
@@ -15,7 +15,7 @@ export default function ActivityItem({
   index = 0,
   showUser = true,
 }: Props) {
-  const gameLink = item.userGameId ? `/games/${item.userGameId}` : "#";
+  const gameLink = item.targetUrl || "#";
 
   const hasBody = !!item.body;
 

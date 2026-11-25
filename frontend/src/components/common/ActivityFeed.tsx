@@ -32,6 +32,7 @@ export default function ActivityFeed({ username }: Props) {
           key={item.id}
           item={item}
           showUser={isGlobal}
+          username={username}
           index={index}
         />
       ))}

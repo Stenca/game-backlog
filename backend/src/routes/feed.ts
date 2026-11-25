@@ -61,13 +61,18 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
             gameId: entry.gameId._id,
           }).select("_id");
 
+          const ugId = userGame?._id;
+
           feedItems.push({
             id: entry._id.toString(),
-            userGameId: userGame?._id.toString() ?? null,
+            userGameId: ugId?.toString() ?? null,
             type: "JOURNAL",
             createdAt: entry.createdAt,
             user: entry.userId,
             game: entry.gameId,
+            targetUrl: ugId
+              ? `/games/${ugId}`
+              : `/u/${entry.userId.username}?tab=games`,
             content: `wrote a journal entry for ${entry.gameId.title}`,
             body: entry.body,
           });
@@ -95,13 +100,18 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
             gameId: comment.entryId.gameId._id,
           }).select("_id");
 
+          const ugId = userGame?._id;
+
           feedItems.push({
             id: comment._id.toString(),
-            userGameId: userGame?._id.toString() ?? null,
+            userGameId: ugId?.toString() ?? null,
             type: "COMMENT",
             createdAt: comment.createdAt,
             user: comment.userId,
             game: comment.entryId.gameId,
+            targetUrl: ugId
+              ? `/games/${ugId}`
+              : `/u/${comment.entryId.userId.username}?tab=games`,
             content: `commented on a journal entry for ${comment.entryId.gameId.title}`,
             body: comment.text,
           });

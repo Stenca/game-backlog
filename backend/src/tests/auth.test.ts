@@ -45,6 +45,13 @@ describe("POST /api/auth/register", () => {
     expect(res.body.user.email).toBe(validUser.email);
   });
 
+  it("returns hasPassword as true", async () => {
+    const res = await request(app).post("/api/auth/register").send(validUser);
+
+    expect(res.status).toBe(201);
+    expect(res.body.user.hasPassword).toBe(true);
+  });
+
   it("never returns the password hash", async () => {
     const res = await request(app).post("/api/auth/register").send(validUser);
 
@@ -56,7 +63,10 @@ describe("POST /api/auth/register", () => {
   it("stores the password as a bcrypt hash, not plain text", async () => {
     await request(app).post("/api/auth/register").send(validUser);
 
-    const user = await User.findOne({ email: validUser.email });
+    const user = await User.findOne({ email: validUser.email }).select(
+      "+passwordHash",
+    );
+
     expect(user).not.toBeNull();
     expect(user!.passwordHash).not.toBe(validUser.password);
     expect(user!.passwordHash).toMatch(/^\$2[aby]\$/);
@@ -163,6 +173,25 @@ describe("POST /api/auth/login", () => {
     expect(res.body.user.displayName).toBe(user.displayName);
   });
 
+  it("returns hasPassword as true", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: user.email, password: user.password });
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.hasPassword).toBe(true);
+  });
+
+  it("never returns the password hash", async () => {
+    const res = await request(app)
+      .post("/api/auth/login")
+      .send({ email: user.email, password: user.password });
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.passwordHash).toBeUndefined();
+    expect(res.body.user.password).toBeUndefined();
+  });
+
   it("rejects an unknown email", async () => {
     const res = await request(app)
       .post("/api/auth/login")
@@ -185,6 +214,7 @@ describe("POST /api/auth/login", () => {
     const unknown = await request(app)
       .post("/api/auth/login")
       .send({ email: "nobody@example.com", password: "anything" });
+
     const wrong = await request(app)
       .post("/api/auth/login")
       .send({ email: user.email, password: "anything" });
