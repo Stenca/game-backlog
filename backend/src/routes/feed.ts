@@ -42,6 +42,9 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
         id: ug._id.toString(),
         userGameId: ug._id.toString(),
         type: "ADD_GAME",
+        targetType: "game",
+        targetId: ug._id.toString(),
+        targetUrl: `/games/${ug._id}`,
         createdAt: ug.createdAt,
         user: ug.userId,
         game: ug.gameId,
@@ -73,6 +76,8 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
             targetUrl: ugId
               ? `/games/${ugId}`
               : `/u/${entry.userId.username}?tab=games`,
+            targetType: "journal-entry",
+            targetId: entry._id.toString(),
             content: `wrote a journal entry for ${entry.gameId.title}`,
             body: entry.body,
           });
@@ -112,6 +117,8 @@ feedRouter.get("/", async (req: AuthedRequest, res) => {
             targetUrl: ugId
               ? `/games/${ugId}`
               : `/u/${comment.entryId.userId.username}?tab=games`,
+            targetType: "journal-entry",
+            targetId: comment.entryId._id.toString(),
             content: `commented on a journal entry for ${comment.entryId.gameId.title}`,
             body: comment.text,
           });

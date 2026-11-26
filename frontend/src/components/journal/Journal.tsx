@@ -13,11 +13,19 @@ type Props = {
   gameId: string;
   userGameId: string;
   isOwner: boolean;
+  scrollToEntryId?: string;
+  scrollToCommentId?: string;
 };
 
 const ENTRIES_PER_PAGE = 5;
 
-export default function Journal({ gameId, userGameId, isOwner }: Props) {
+export default function Journal({
+  gameId,
+  userGameId,
+  isOwner,
+  scrollToEntryId,
+  scrollToCommentId,
+}: Props) {
   const {
     data: entries = [],
     isLoading,
@@ -33,6 +41,19 @@ export default function Journal({ gameId, userGameId, isOwner }: Props) {
   useEffect(() => {
     setVisibleCount(ENTRIES_PER_PAGE);
   }, [entries.length]);
+
+  // Automatically reveal the journal entry targeted by an activity.
+  useEffect(() => {
+    if (!scrollToEntryId || entries.length === 0) return;
+
+    const targetIndex = entries.findIndex(
+      (entry) => entry._id === scrollToEntryId,
+    );
+
+    if (targetIndex !== -1) {
+      setVisibleCount((current) => Math.max(current, targetIndex + 1));
+    }
+  }, [entries, scrollToEntryId]);
 
   const visibleEntries = entries.slice(0, visibleCount);
 
@@ -68,6 +89,9 @@ export default function Journal({ gameId, userGameId, isOwner }: Props) {
                 key={entry._id}
                 entry={entry}
                 isOwner={isOwner}
+                scrollToCommentId={
+                  entry._id === scrollToEntryId ? scrollToCommentId : undefined
+                }
               />
             ))}
           </ul>

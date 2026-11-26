@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/api";
 import { useAuthStore } from "@/stores/authStore";
@@ -12,9 +12,13 @@ import { queryKeys, invalidate } from "@/utils/queryKeys";
 
 type Props = {
   entryId: string;
+  scrollToCommentId?: string;
 };
 
-export default function JournalEntryComments({ entryId }: Props) {
+export default function JournalEntryComments({
+  entryId,
+  scrollToCommentId,
+}: Props) {
   const currentUser = useAuthStore((s) => s.user);
   const [text, setText] = useState("");
 
@@ -22,6 +26,35 @@ export default function JournalEntryComments({ entryId }: Props) {
     queryKey: queryKeys.comments.entry(entryId),
     queryFn: () => apiFetch<Comment[]>(`/api/comments/entry/${entryId}`),
   });
+
+  useEffect(() => {
+    if (!scrollToCommentId || isLoading) return;
+
+    const comment = comments.find((item) => item._id === scrollToCommentId);
+
+    if (!comment) return;
+
+    const element = document.getElementById(
+      `journal-comment-${scrollToCommentId}`,
+    );
+
+    if (!element) return;
+
+    const timer = window.setTimeout(() => {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+
+      element.classList.add("ring-2", "ring-brand", "bg-brand/10");
+
+      window.setTimeout(() => {
+        element.classList.remove("ring-2", "ring-brand", "bg-brand/10");
+      }, 2500);
+    }, 100);
+
+    return () => window.clearTimeout(timer);
+  }, [comments, isLoading, scrollToCommentId]);
 
   const addComment = useMutation({
     mutationFn: (newText: string) =>
@@ -54,19 +87,27 @@ export default function JournalEntryComments({ entryId }: Props) {
       ) : (
         <ul className="mb-4 flex flex-col gap-3">
           {comments.map((comment) => (
-            <li key={comment._id} className="flex items-start gap-3">
+            <li
+              key={comment._id}
+              id={`journal-comment-${comment._id}`}
+              className="flex items-start gap-3 rounded transition-colors"
+            >
               <Avatar user={comment.userId} size="sm" />
+
               <div className="flex-1 rounded-lg bg-surface-2 p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-ink">
                     {comment.userId.displayName}
                   </span>
+
                   <span className="text-[10px] text-ink-muted">
                     {formatRelative(comment.createdAt)}
                   </span>
                 </div>
+
                 <p className="mt-1 text-sm text-ink">{comment.text}</p>
               </div>
+
               {currentUser?.id === comment.userId._id && (
                 <button
                   onClick={() => deleteComment.mutate(comment._id)}
@@ -93,6 +134,7 @@ export default function JournalEntryComments({ entryId }: Props) {
           placeholder="Add a comment..."
           className="bg-surface-2 hover:border-brand"
         />
+
         <Button
           type="submit"
           size="sm"

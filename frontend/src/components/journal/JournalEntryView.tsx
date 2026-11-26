@@ -15,6 +15,7 @@ type Props = {
   isOwner: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  scrollToCommentId?: string;
 };
 
 export default function JournalEntryView({
@@ -22,10 +23,11 @@ export default function JournalEntryView({
   isOwner,
   onEdit,
   onDelete,
+  scrollToCommentId,
 }: Props) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(!!scrollToCommentId);
 
   const currentUser = useAuthStore((s) => s.user);
 
@@ -37,6 +39,13 @@ export default function JournalEntryView({
     setLikes((entry.likes || []).map((id: any) => String(id)));
   }, [entry.likes]);
 
+  // Automatically expand comments when navigating from an activity.
+  useEffect(() => {
+    if (scrollToCommentId) {
+      setShowComments(true);
+    }
+  }, [scrollToCommentId]);
+
   const isLiked = currentUser ? likes.includes(String(currentUser.id)) : false;
 
   const likeMutation = useMutation({
@@ -47,9 +56,15 @@ export default function JournalEntryView({
       ),
     onSuccess: (data) => {
       if (data.isLiked && currentUser) {
-        setLikes([...likes, String(currentUser.id)]);
+        setLikes((previous) =>
+          previous.includes(String(currentUser.id))
+            ? previous
+            : [...previous, String(currentUser.id)],
+        );
       } else {
-        setLikes(likes.filter((id) => id !== String(currentUser?.id)));
+        setLikes((previous) =>
+          previous.filter((id) => id !== String(currentUser?.id)),
+        );
       }
     },
   });
@@ -159,7 +174,12 @@ export default function JournalEntryView({
         </button>
       </div>
 
-      {showComments && <JournalEntryComments entryId={entry._id} />}
+      {showComments && (
+        <JournalEntryComments
+          entryId={entry._id}
+          scrollToCommentId={scrollToCommentId}
+        />
+      )}
 
       <AnimatePresence>
         {carouselOpen && (

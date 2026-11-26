@@ -29,6 +29,7 @@ export default function GameDetail() {
   const updateGame = useGameStore((s) => s.updateGame);
 
   const returnTo = location.state?.returnTo;
+  const scrollTarget = location.state?.scrollTo;
 
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
@@ -47,6 +48,7 @@ export default function GameDetail() {
     enabled: !!id,
   });
 
+  // Initialize rating and review when the game loads
   useEffect(() => {
     if (game) {
       setRating(game.rating ?? 0);
@@ -55,6 +57,7 @@ export default function GameDetail() {
     }
   }, [game]);
 
+  // Handle Escape key
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== "Escape") return;
@@ -70,8 +73,69 @@ export default function GameDetail() {
     }
 
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [confirmingDelete, isEditing, game?.review]);
+
+  // Scroll to the journal entry opened from the activity feed
+  useEffect(() => {
+    if (
+      !game ||
+      scrollTarget?.type !== "journal-entry" ||
+      typeof scrollTarget.id !== "string"
+    ) {
+      return;
+    }
+
+    const elementId = `journal-entry-${scrollTarget.id}`;
+
+    let observer: MutationObserver | null = null;
+    let highlightTimer: number | undefined;
+
+    function tryScroll() {
+      const element = document.getElementById(elementId);
+
+      if (!element) return false;
+
+      observer?.disconnect();
+
+      requestAnimationFrame(() => {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+
+        element.classList.add("ring-2", "ring-brand", "bg-brand/10");
+
+        highlightTimer = window.setTimeout(() => {
+          element.classList.remove("ring-2", "ring-brand", "bg-brand/10");
+        }, 2200);
+      });
+
+      return true;
+    }
+
+    if (!tryScroll()) {
+      observer = new MutationObserver(() => {
+        tryScroll();
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      observer?.disconnect();
+
+      if (highlightTimer !== undefined) {
+        window.clearTimeout(highlightTimer);
+      }
+    };
+  }, [game, scrollTarget?.id, scrollTarget?.type]);
 
   async function handleStatusChange(newStatus: Status) {
     if (!game) return;
@@ -384,6 +448,10 @@ export default function GameDetail() {
           gameId={game.game._id}
           userGameId={game._id}
           isOwner={isOwner}
+          scrollToEntryId={
+            scrollTarget?.type === "journal-entry" ? scrollTarget.id : undefined
+          }
+          scrollToCommentId={scrollTarget?.commentId}
         />
       </main>
     </PageTransition>
