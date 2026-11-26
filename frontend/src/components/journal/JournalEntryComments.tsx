@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/api";
 import { useAuthStore } from "@/stores/authStore";
 import { type Comment } from "@/types/Game";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatRelative } from "@/utils/date";
 import { Trash2 } from "lucide-react";
+import { queryKeys, invalidate } from "@/utils/queryKeys";
 
 type Props = {
   entryId: string;
@@ -15,11 +16,10 @@ type Props = {
 
 export default function JournalEntryComments({ entryId }: Props) {
   const currentUser = useAuthStore((s) => s.user);
-  const queryClient = useQueryClient();
   const [text, setText] = useState("");
 
   const { data: comments = [], isLoading } = useQuery({
-    queryKey: ["comments", entryId],
+    queryKey: queryKeys.comments.entry(entryId),
     queryFn: () => apiFetch<Comment[]>(`/api/comments/entry/${entryId}`),
   });
 
@@ -30,7 +30,9 @@ export default function JournalEntryComments({ entryId }: Props) {
         body: JSON.stringify({ text: newText }),
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", entryId] });
+      invalidate.comments(entryId);
+      invalidate.feed();
+      invalidate.activity();
       setText("");
     },
   });
@@ -39,7 +41,9 @@ export default function JournalEntryComments({ entryId }: Props) {
     mutationFn: (commentId: string) =>
       apiFetch(`/api/comments/${commentId}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", entryId] });
+      invalidate.comments(entryId);
+      invalidate.feed();
+      invalidate.activity();
     },
   });
 

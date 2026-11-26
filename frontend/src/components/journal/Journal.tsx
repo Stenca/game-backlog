@@ -7,6 +7,7 @@ import JournalEntryItem from "@/components/journal/JournalEntryItem";
 import JournalSkeleton from "@/components/journal/JournalSkeleton";
 import ErrorState from "@/components/common/ErrorState";
 import { Button } from "@/components/ui/button";
+import { queryKeys } from "@/utils/queryKeys";
 
 type Props = {
   gameId: string;
@@ -23,7 +24,7 @@ export default function Journal({ gameId, userGameId, isOwner }: Props) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["journal", userGameId],
+    queryKey: queryKeys.journal.userGame(userGameId),
     queryFn: () => apiFetch<JournalEntry[]>(`/api/journal/game/${userGameId}`),
   });
 

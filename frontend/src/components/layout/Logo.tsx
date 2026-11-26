@@ -54,11 +54,8 @@ export default function Logo({ size = "sm", tagline, className = "" }: Props) {
   }
 
   return (
-    <Link
-      to="/games"
-      className="inline-flex shrink-0 transition-opacity hover:opacity-80"
-    >
+    <div className="inline-flex shrink-0 transition-opacity hover:opacity-80">
       {content}
-    </Link>
+    </div>
   );
 }

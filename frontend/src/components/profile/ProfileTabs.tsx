@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type UserGame, type Status } from "@/types/Game";
 import GameCard from "@/components/games/GameCard";
@@ -6,7 +7,6 @@ import { sortGames } from "@/utils/status";
 import SettingsForm from "./SettingsForm";
 import { Button } from "@/components/ui/button";
 import GameFilters from "@/components/games/GameFilters";
-import { useSearchParams } from "react-router-dom";
 import ActivityFeed from "@/components/common/ActivityFeed";
 import PageTransition from "@/components/animations/PageTransition";
 
@@ -35,6 +35,10 @@ function ProfileTab({
 
 export default function ProfileTabs({ games, isOwner, username }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  const returnTo = location.pathname + location.search;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
@@ -44,9 +48,12 @@ export default function ProfileTabs({ games, isOwner, username }: Props) {
     const matchesSearch = g.game.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
+
     const matchesStatus = statusFilter === "all" || g.status === statusFilter;
+
     const matchesPlatform =
       platformFilter === "all" || g.platform.name === platformFilter;
+
     return matchesSearch && matchesStatus && matchesPlatform;
   });
 
@@ -96,7 +103,13 @@ export default function ProfileTabs({ games, isOwner, username }: Props) {
             <>
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                 {visibleGames.map((g, i) => (
-                  <GameCard key={g._id} game={g} index={i} isOwner={false} />
+                  <GameCard
+                    key={g._id}
+                    game={g}
+                    index={i}
+                    isOwner={false}
+                    returnTo={returnTo}
+                  />
                 ))}
               </ul>
 

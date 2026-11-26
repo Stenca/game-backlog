@@ -11,6 +11,7 @@ import ProfileStats from "@/components/profile/ProfileStats";
 import CurrentlyPlaying from "@/components/profile/CurrentlyPlaying";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import PageTransition from "@/components/animations/PageTransition";
+import { queryKeys } from "@/utils/queryKeys";
 
 export default function UserProfile() {
   const { username } = useParams<{ username: string }>();
@@ -21,13 +22,13 @@ export default function UserProfile() {
     isLoading: userLoading,
     error: userError,
   } = useQuery({
-    queryKey: ["user", username],
+    queryKey: queryKeys.user.profile(username!),
     queryFn: () => apiFetch<{ user: any }>(`/api/users/${username}`),
     enabled: !!username,
   });
 
   const { data: games = [], isLoading: gamesLoading } = useQuery({
-    queryKey: ["games", username],
+    queryKey: queryKeys.games.user(username!),
     queryFn: () => apiFetch<UserGame[]>(`/api/games?user=${username}`),
     enabled: !!username,
   });

@@ -6,6 +6,7 @@ import type { SearchResult } from "@/types/Game";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SearchBar } from "@/components/common/SearchBar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queryKeys } from "@/utils/queryKeys";
 
 type Props = {
   onSelect: (result: SearchResult) => void;
@@ -42,7 +43,7 @@ export default function GameSearch({ onSelect, selected, onClear }: Props) {
     isFetching,
     isError,
   } = useQuery({
-    queryKey: ["gameSearch", debouncedQuery],
+    queryKey: queryKeys.gameSearch.search(debouncedQuery),
     queryFn: () =>
       apiFetch<SearchResult[]>(
         `/api/games/search?q=${encodeURIComponent(debouncedQuery)}`,

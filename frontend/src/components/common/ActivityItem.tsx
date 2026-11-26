@@ -8,12 +8,14 @@ type Props = {
   index?: number;
   showUser?: boolean;
   username?: string;
+  returnTo?: string;
 };
 
 export default function ActivityItem({
   item,
   index = 0,
   showUser = true,
+  returnTo,
 }: Props) {
   const gameLink = item.targetUrl || "#";
 
@@ -63,6 +65,7 @@ export default function ActivityItem({
       {item.game && (
         <Link
           to={gameLink}
+          state={returnTo ? { returnTo } : undefined}
           className={`flex w-fit items-center gap-3 rounded-lg border border-border bg-surface-2 p-2 pr-4 transition-colors hover:border-brand/50 ${
             hasBody ? "mt-auto" : ""
           }`}

@@ -1,16 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 import { apiFetch } from "@/api";
 import Loading from "@/components/common/Loading";
 import ActivityItem from "./ActivityItem";
+import { queryKeys } from "@/utils/queryKeys";
 
 type Props = {
   username?: string;
 };
 
 export default function ActivityFeed({ username }: Props) {
+  const location = useLocation();
+
   const isGlobal = !username;
   const endpoint = isGlobal ? "/api/feed" : `/api/users/${username}/activity`;
-  const queryKey = isGlobal ? ["feed"] : ["activity", username];
+
+  const queryKey = isGlobal
+    ? queryKeys.feed.all
+    : queryKeys.activity.user(username!);
+
+  const returnTo = location.pathname + location.search;
 
   const { data: activity = [], isLoading } = useQuery({
     queryKey,
@@ -33,6 +42,7 @@ export default function ActivityFeed({ username }: Props) {
           item={item}
           showUser={isGlobal}
           username={username}
+          returnTo={returnTo}
           index={index}
         />
       ))}

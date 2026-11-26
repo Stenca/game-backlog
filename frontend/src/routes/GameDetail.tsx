@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -22,9 +22,13 @@ import PageTransition from "@/components/animations/PageTransition";
 
 export default function GameDetail() {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+
   const user = useAuthStore((s) => s.user);
   const updateStatus = useGameStore((s) => s.updateStatus);
   const updateGame = useGameStore((s) => s.updateGame);
+
+  const returnTo = location.state?.returnTo;
 
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
@@ -76,18 +80,22 @@ export default function GameDetail() {
 
   async function handleRatingChange(newRating: number) {
     if (!game) return;
+
     const previousRating = rating;
     setRating(newRating);
+
     const ok = await updateGame(game._id, { rating: newRating });
     if (!ok) setRating(previousRating);
   }
 
   async function handleSaveReview() {
     if (!game) return;
+
     setSavingReview(true);
+
     try {
-      await updateGame(game._id, { review });
-      setIsEditing(false);
+      const ok = await updateGame(game._id, { review });
+      if (ok) setIsEditing(false);
     } finally {
       setSavingReview(false);
     }
@@ -95,12 +103,17 @@ export default function GameDetail() {
 
   async function handleDeleteReview() {
     if (!game) return;
+
     setSavingReview(true);
+
     try {
-      await updateGame(game._id, { review: "" });
-      setReview("");
-      setIsEditing(false);
-      setConfirmingDelete(false);
+      const ok = await updateGame(game._id, { review: "" });
+
+      if (ok) {
+        setReview("");
+        setIsEditing(false);
+        setConfirmingDelete(false);
+      }
     } finally {
       setSavingReview(false);
     }
@@ -117,6 +130,7 @@ export default function GameDetail() {
         >
           ← Back to games
         </Link>
+
         <ErrorState
           title="Failed to load game"
           message={error.message}
@@ -129,12 +143,37 @@ export default function GameDetail() {
   if (!game) return null;
 
   const isPopulated = typeof game.userId === "object" && game.userId !== null;
+
   const ownerId = isPopulated
     ? (game.userId as any).id || (game.userId as any)._id
     : game.userId;
+
   const isOwner = ownerId === user?.id;
   const gameUser = isPopulated ? (game.userId as any) : null;
+
   const hasReviewChanges = review !== (game.review ?? "");
+
+  const validReturnTo =
+    typeof returnTo === "string" &&
+    returnTo.startsWith("/") &&
+    !returnTo.startsWith("//");
+
+  const validProfileReturn =
+    validReturnTo && /^\/u\/[^/]+(?:\?.*)?$/.test(returnTo);
+
+  const backTo = validReturnTo
+    ? returnTo
+    : isOwner
+      ? "/games"
+      : `/u/${gameUser?.username || ""}`;
+
+  const backLabel = validProfileReturn
+    ? "profile"
+    : validReturnTo
+      ? "previous page"
+      : isOwner
+        ? "games"
+        : "profile";
 
   return (
     <PageTransition>
@@ -143,15 +182,16 @@ export default function GameDetail() {
         <div className="pointer-events-none absolute top-1/3 -right-20 -z-10 h-100 w-100 rounded-full bg-brand/5 blur-[100px]" />
 
         <Link
-          to={isOwner ? "/games" : `/u/${gameUser?.username || ""}`}
+          to={backTo}
           className="mb-4 inline-block text-sm text-brand transition-colors hover:text-brand-hover sm:mb-6"
         >
-          ← Back to {isOwner ? "games" : "profile"}
+          ← Back to {backLabel}
         </Link>
 
         {!isOwner && gameUser && (
           <div className="mb-6 flex items-center gap-3 rounded border border-border bg-surface/50 p-3">
             <Avatar user={gameUser} size="sm" />
+
             <span className="text-sm text-ink-muted">
               Viewing{" "}
               <span className="font-medium text-ink">
@@ -165,6 +205,7 @@ export default function GameDetail() {
         <div className="grid grid-cols-[100px_1fr] gap-4 sm:grid-cols-[150px_1fr] md:grid-cols-[224px_1fr] md:gap-8">
           <div className="flex flex-col gap-4">
             <GameCover game={game} showStatus={false} />
+
             <div className="flex flex-1 flex-col justify-center rounded bg-surface p-2 sm:p-3">
               <GameTimeline game={game} />
             </div>
@@ -191,6 +232,7 @@ export default function GameDetail() {
                 {game.game.releaseDate && (
                   <span>{game.game.releaseDate.slice(0, 4)}</span>
                 )}
+
                 {game.game.genres && game.game.genres.length > 0 && (
                   <>
                     <span>•</span>
@@ -212,6 +254,7 @@ export default function GameDetail() {
                     {game.status}
                   </span>
                 )}
+
                 <PlatformBadge platform={game.platform} size="md" />
               </div>
             </div>
@@ -227,6 +270,7 @@ export default function GameDetail() {
                     value={rating}
                     onChange={isOwner ? handleRatingChange : () => {}}
                   />
+
                   <span className="text-xs text-ink-muted sm:text-sm">
                     {rating > 0 ? `${rating}/5` : "Not rated"}
                   </span>
@@ -242,6 +286,7 @@ export default function GameDetail() {
                     >
                       Edit
                     </Button>
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -268,6 +313,7 @@ export default function GameDetail() {
                         handleSaveReview();
                       }
                     }
+
                     if (e.key === "Escape" && confirmingDelete) {
                       e.preventDefault();
                       setConfirmingDelete(false);
@@ -318,6 +364,7 @@ export default function GameDetail() {
                         Cancel
                       </Button>
                     )}
+
                     <Button
                       size="sm"
                       onClick={handleSaveReview}

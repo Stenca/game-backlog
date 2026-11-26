@@ -14,6 +14,7 @@ import { usePagination } from "../hooks/usePagination";
 import Pagination from "@/components/common/Pagination";
 import GameFilters from "@/components/games/GameFilters";
 import PageTransition from "@/components/animations/PageTransition";
+import { queryKeys } from "@/utils/queryKeys";
 
 export default function Games() {
   const [filter, setFilter] = useState<Status | "all">("all");
@@ -27,7 +28,7 @@ export default function Games() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["games"],
+    queryKey: queryKeys.games.all,
     queryFn: () => apiFetch<UserGame[]>("/api/games"),
   });
 

@@ -16,17 +16,26 @@ type Props = {
   game: UserGame;
   index?: number;
   isOwner?: boolean;
+  returnTo?: string;
 };
 
-export default function GameCard({ game, index = 0, isOwner = true }: Props) {
+export default function GameCard({
+  game,
+  index = 0,
+  isOwner = true,
+  returnTo,
+}: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateStatus = useGameStore((s) => s.updateStatus);
   const removeGame = useGameStore((s) => s.remove);
 
+  const navigationState = returnTo ? { returnTo } : undefined;
+
   async function handleConfirmDelete() {
     setIsDeleting(true);
+
     try {
       await removeGame(game._id);
       toast.add({ type: "success", title: "Game removed from library" });
@@ -52,7 +61,11 @@ export default function GameCard({ game, index = 0, isOwner = true }: Props) {
     >
       <div>
         <div className="relative aspect-3/4 w-full overflow-hidden rounded group-hover:shadow-lg group-hover:shadow-black/50">
-          <Link to={`/games/${game._id}`} className="block h-full w-full">
+          <Link
+            to={`/games/${game._id}`}
+            state={navigationState}
+            className="block h-full w-full"
+          >
             <GameCover game={game} />
           </Link>
 
@@ -116,7 +129,11 @@ export default function GameCard({ game, index = 0, isOwner = true }: Props) {
           </AnimatePresence>
         </div>
 
-        <Link to={`/games/${game._id}`} className="mt-1 block">
+        <Link
+          to={`/games/${game._id}`}
+          state={navigationState}
+          className="mt-1 block"
+        >
           <div className="truncate text-xs font-medium text-ink-muted">
             {game.game.title}
           </div>

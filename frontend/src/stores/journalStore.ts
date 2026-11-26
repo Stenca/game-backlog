@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { apiFetch } from "../api";
-import { queryClient } from "../main";
 import { useAuthStore } from "@/stores/authStore";
+import { invalidate } from "@/utils/queryKeys";
 
 type JournalStore = {
   editingId: string | null;
@@ -17,19 +17,27 @@ type JournalStore = {
 
 export const useJournalStore = create<JournalStore>((set) => ({
   editingId: null,
+
   setEditingId: (id) => set({ editingId: id }),
 
-  addEntry: async (gameId, formData) => {
+  addEntry: async (_gameId, formData) => {
     try {
       const token = useAuthStore.getState().token;
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/journal`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+
       if (!res.ok) throw new Error("Failed to add entry");
 
-      await queryClient.invalidateQueries({ queryKey: ["journal"] });
+      await Promise.all([
+        invalidate.journal(),
+        invalidate.feed(),
+        invalidate.activity(),
+      ]);
+
       set({ editingId: null });
       return true;
     } catch (err) {
@@ -38,9 +46,10 @@ export const useJournalStore = create<JournalStore>((set) => ({
     }
   },
 
-  updateEntry: async (id, gameId, formData) => {
+  updateEntry: async (id, _gameId, formData) => {
     try {
       const token = useAuthStore.getState().token;
+
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/api/journal/${id}`,
         {
@@ -49,9 +58,15 @@ export const useJournalStore = create<JournalStore>((set) => ({
           body: formData,
         },
       );
+
       if (!res.ok) throw new Error("Failed to update entry");
 
-      await queryClient.invalidateQueries({ queryKey: ["journal"] });
+      await Promise.all([
+        invalidate.journal(),
+        invalidate.feed(),
+        invalidate.activity(),
+      ]);
+
       set({ editingId: null });
       return true;
     } catch (err) {
@@ -60,11 +75,17 @@ export const useJournalStore = create<JournalStore>((set) => ({
     }
   },
 
-  removeEntry: async (id, gameId) => {
+  removeEntry: async (id, _gameId) => {
     try {
       await apiFetch(`/api/journal/${id}`, { method: "DELETE" });
 
-      await queryClient.invalidateQueries({ queryKey: ["journal"] });
+      await Promise.all([
+        invalidate.journal(),
+        invalidate.feed(),
+        invalidate.activity(),
+        invalidate.comments(),
+      ]);
+
       set({ editingId: null });
       return true;
     } catch (err) {

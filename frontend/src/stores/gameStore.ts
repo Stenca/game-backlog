@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { apiFetch } from "../api";
 import { queryClient } from "../main";
-import type { Status, UserGame } from "../types/Game";
+import { queryKeys, invalidate } from "@/utils/queryKeys";
+import type { Status, UserGame } from "@/types/Game";
 
 type AddGamePayload = {
   rawgId: number;
@@ -33,10 +34,13 @@ export const useGameStore = create<GameStore>((_, get) => ({
       body: JSON.stringify(payload),
     });
 
-    queryClient.setQueryData<UserGame[]>(["games"], (old = []) => [
+    queryClient.setQueryData<UserGame[]>(queryKeys.games.all, (old = []) => [
       created,
       ...old,
     ]);
+
+    await invalidate.feed();
+    await invalidate.activity();
 
     return created;
   },
@@ -48,7 +52,7 @@ export const useGameStore = create<GameStore>((_, get) => ({
         body: JSON.stringify(payload),
       });
 
-      queryClient.setQueryData<UserGame[]>(["games"], (old = []) =>
+      queryClient.setQueryData<UserGame[]>(queryKeys.games.all, (old = []) =>
         old.map((g) => (g._id === id ? updated : g)),
       );
 
@@ -69,9 +73,12 @@ export const useGameStore = create<GameStore>((_, get) => ({
     try {
       await apiFetch(`/api/games/${id}`, { method: "DELETE" });
 
-      queryClient.setQueryData<UserGame[]>(["games"], (old = []) =>
+      queryClient.setQueryData<UserGame[]>(queryKeys.games.all, (old = []) =>
         old.filter((g) => g._id !== id),
       );
+
+      await invalidate.feed();
+      await invalidate.activity();
 
       return true;
     } catch (err) {
